@@ -105,9 +105,9 @@ public sealed class HardwareMonitorService : IDisposable
             return;
         }
 
-    Stop();
-    _timer.Dispose();
-    _computer.Close();
+        Stop();
+        _timer.Dispose();
+        _computer.Close();
         _disposed = true;
     }
 }
@@ -213,6 +213,6 @@ public sealed record HardwareSnapshot(DateTime Timestamp, HardwareSnapshot.Compo
         var temp = FirstValue(hardware.Sensors, SensorType.Temperature);
         var life = FirstValue(hardware.Sensors, SensorType.Level);
         var usage = FirstValue(hardware.Sensors, SensorType.Load);
-    return new StorageSnapshot(hardware.Name, temp, life, usage, null);
+        return new StorageSnapshot(hardware.Name, temp, life, usage, null);
     }
 }

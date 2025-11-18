@@ -55,12 +55,12 @@ public sealed class CleanupModuleViewModel : ObservableObject
             existing.PropertyChanged -= OnItemPropertyChanged;
         }
 
-    _items.CollectionChanged -= OnItemsCollectionChanged;
-    _items = new ObservableCollection<CleanupItemViewModel>(items.Select(item => CreateItemViewModel(item)));
-    _items.CollectionChanged += OnItemsCollectionChanged;
-    RaisePropertyChanged(nameof(Items));
-    SelectedItem = _items.FirstOrDefault();
-    RaiseTotalsChanged();
+        _items.CollectionChanged -= OnItemsCollectionChanged;
+        _items = new ObservableCollection<CleanupItemViewModel>(items.Select(item => CreateItemViewModel(item)));
+        _items.CollectionChanged += OnItemsCollectionChanged;
+        RaisePropertyChanged(nameof(Items));
+        SelectedItem = _items.FirstOrDefault();
+        RaiseTotalsChanged();
     }
 
     public void SelectAll(bool isSelected)
