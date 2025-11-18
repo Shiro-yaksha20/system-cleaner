@@ -415,7 +415,7 @@ public sealed class UninstallerService
             {
             }
 
-        throw new System.TimeoutException($"{app.Name}: Uninstall command timed out after {timeout.TotalMinutes:F0} minute(s).");
+            throw new System.TimeoutException($"{app.Name}: Uninstall command timed out after {timeout.TotalMinutes:F0} minute(s).");
         }
 
         return $"{app.Name}: Uninstaller exited with code {process.ExitCode}.";

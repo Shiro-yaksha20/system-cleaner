@@ -91,9 +91,9 @@ public sealed class VirusTotalService : IDisposable
             { new StreamContent(fileStream), "file", Path.GetFileName(filePath) }
         };
 
-    using var response = await _httpClient.PostAsync("files", multipart, token).ConfigureAwait(false);
-    UpdateQuota(response);
-    await EnsureSuccessAsync(response, token).ConfigureAwait(false);
+        using var response = await _httpClient.PostAsync("files", multipart, token).ConfigureAwait(false);
+        UpdateQuota(response);
+        await EnsureSuccessAsync(response, token).ConfigureAwait(false);
         var analysisId = await ExtractAnalysisIdAsync(response, token).ConfigureAwait(false);
         if (analysisId is null)
         {
@@ -129,9 +129,9 @@ public sealed class VirusTotalService : IDisposable
             ["url"] = url
         });
 
-    using var response = await _httpClient.PostAsync("urls", content, token).ConfigureAwait(false);
-    UpdateQuota(response);
-    await EnsureSuccessAsync(response, token).ConfigureAwait(false);
+        using var response = await _httpClient.PostAsync("urls", content, token).ConfigureAwait(false);
+        UpdateQuota(response);
+        await EnsureSuccessAsync(response, token).ConfigureAwait(false);
         var analysisId = await ExtractAnalysisIdAsync(response, token).ConfigureAwait(false);
         if (analysisId is null)
         {

@@ -38,12 +38,12 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
 
     public VirusTotalViewModel(VirusTotalService service)
     {
-    _service = service ?? throw new ArgumentNullException(nameof(service));
-    _service.ApiKeyChanged += OnApiKeyChanged;
-    _service.QuotaUpdated += OnQuotaUpdated;
+        _service = service ?? throw new ArgumentNullException(nameof(service));
+        _service.ApiKeyChanged += OnApiKeyChanged;
+        _service.QuotaUpdated += OnQuotaUpdated;
 
-    ResetQuotaInfo();
-    ApplyQuota(_service.LatestQuota);
+        ResetQuotaInfo();
+        ApplyQuota(_service.LatestQuota);
         if (HasApiKey)
         {
             RequestQuotaRefresh();
@@ -53,7 +53,7 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
         _scanFileCommand = new RelayCommand(async () => await ScanFileAsync(), CanExecuteScanFile);
         _scanUrlCommand = new RelayCommand(async () => await ScanUrlAsync(), CanExecuteScanUrl);
         _refreshCommand = new RelayCommand(async () => await RefreshSelectedAsync(), CanExecuteRefresh);
-    _cancelCommand = new RelayCommand(() => CancelCurrentOperation(), () => IsBusy);
+        _cancelCommand = new RelayCommand(() => CancelCurrentOperation(), () => IsBusy);
 
         if (!HasApiKey)
         {

@@ -62,7 +62,7 @@ public sealed class UninstallerViewModel : ObservableObject
         _applicationsView = CollectionViewSource.GetDefaultView(Applications);
         _applicationsView.Filter = FilterApplications;
         _applicationsView.SortDescriptions.Clear();
-    _applicationsView.SortDescriptions.Add(new SortDescription(nameof(InstalledApplicationViewModel.Name), ListSortDirection.Ascending));
+        _applicationsView.SortDescriptions.Add(new SortDescription(nameof(InstalledApplicationViewModel.Name), ListSortDirection.Ascending));
 
         if (_applicationsView is ICollectionViewLiveShaping liveView)
         {
@@ -70,9 +70,9 @@ public sealed class UninstallerViewModel : ObservableObject
             liveView.IsLiveSorting = true;
         }
 
-    BindingOperations.EnableCollectionSynchronization(Applications, _applicationsSyncRoot);
-    BindingOperations.EnableCollectionSynchronization(BrowserExtensions, _extensionsSyncRoot);
-    BindingOperations.EnableCollectionSynchronization(ResidualItems, _residualsSyncRoot);
+        BindingOperations.EnableCollectionSynchronization(Applications, _applicationsSyncRoot);
+        BindingOperations.EnableCollectionSynchronization(BrowserExtensions, _extensionsSyncRoot);
+        BindingOperations.EnableCollectionSynchronization(ResidualItems, _residualsSyncRoot);
 
         _refreshCommand = new RelayCommand(async () => await RefreshAsync(), () => !IsBusy);
         _uninstallCommand = new RelayCommand(async () => await UninstallSelectedAsync(force: false), () => !IsBusy && SelectedCount > 0);
@@ -81,11 +81,11 @@ public sealed class UninstallerViewModel : ObservableObject
         _openRegistryKeyCommand = new RelayCommand(OpenRegistryKey, () => SelectedApplication is not null);
         _removeExtensionCommand = new RelayCommand(async () => await RemoveSelectedExtensionAsync(), () => SelectedExtension?.CanRemove == true);
         _powerfulScanCommand = new RelayCommand(async () => await RunPowerfulScanAsync(), () => !IsBusy && SelectedCount > 0);
-    _cleanupResidualsCommand = new RelayCommand(async () => await CleanupResidualsAsync(), () => !IsBusy && ResidualItems.Any(item => item.IsSelected));
-	_toggleMonitorCommand = new RelayCommand(async () => await ToggleInstallMonitorAsync());
+        _cleanupResidualsCommand = new RelayCommand(async () => await CleanupResidualsAsync(), () => !IsBusy && ResidualItems.Any(item => item.IsSelected));
+        _toggleMonitorCommand = new RelayCommand(async () => await ToggleInstallMonitorAsync());
         _toggleWindowsAppsCommand = new RelayCommand(ToggleWindowsAppsFilter);
 
-    ResidualItems.CollectionChanged += OnResidualItemsCollectionChanged;
+        ResidualItems.CollectionChanged += OnResidualItemsCollectionChanged;
     }
 
     public ObservableCollection<InstalledApplicationViewModel> Applications { get; }

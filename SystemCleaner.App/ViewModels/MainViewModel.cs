@@ -116,7 +116,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
                 SelectedTab = tab;
             }
         });
-    _cancelCommand = new RelayCommand(() => CancelCurrentOperation(), () => IsBusy);
+        _cancelCommand = new RelayCommand(() => CancelCurrentOperation(), () => IsBusy);
 
         _virusTotal = new VirusTotalViewModel(_virusTotalService);
 
@@ -389,7 +389,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             return;
         }
 
-    CancelCurrentOperation();
+        CancelCurrentOperation();
         _currentOperationCts = new CancellationTokenSource();
         StatusMessage = startMessage;
         IsBusy = true;
@@ -779,7 +779,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
-    CancelCurrentOperation();
+        CancelCurrentOperation();
         _hardwareMonitorService.SnapshotAvailable -= OnHardwareSnapshotAvailable;
         _hardwareMonitorService.Dispose();
         _virusTotal.Dispose();
