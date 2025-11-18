@@ -1,2 +1,6 @@
 # Update the handles below to match the maintainers' GitHub usernames.
+# Example:
+#   /SystemCleaner.App/ @frontend-maintainer
+#   /SystemCleaner.Core/ @backend-maintainer
+# Default owners for the repository:
 * @your-github-handle

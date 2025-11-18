@@ -66,3 +66,6 @@ SystemCleaner.sln
    - `build` – runs `dotnet build SystemCleaner.sln`
    - `test` – runs `dotnet test SystemCleaner.sln`
 - Git version control is initialized. Create feature branches for changes, merge to `main` after successful builds, and tag releases when ready (e.g., `v0.1.0`).
+- The repository pins the .NET SDK via `global.json`; install the matching SDK before building locally or in CI.
+- Review `CONTRIBUTING.md`, `SECURITY.md`, and `docs/RELEASE_PROCESS.md` for expectations around commits, vulnerability disclosure, and release packaging.
+- Track user-facing updates in `CHANGELOG.md` and include changelog edits with every release-bound pull request.

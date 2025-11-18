@@ -27,8 +27,22 @@ jobs:
       - name: Restore
         run: dotnet restore SystemCleaner.sln
 
+      - name: Verify formatting
+        run: dotnet format SystemCleaner.sln --verify-no-changes
+
       - name: Build
         run: dotnet build SystemCleaner.sln --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test SystemCleaner.sln --configuration Release --no-build --verbosity normal
+        run: dotnet test SystemCleaner.sln --configuration Release --no-build --verbosity normal --collect "XPlat Code Coverage"
+
+      - name: Check for vulnerable packages
+        run: dotnet list SystemCleaner.sln package --vulnerable
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            **/TestResults/**/*.xml
