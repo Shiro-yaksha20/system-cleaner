@@ -1,0 +1,30 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color x:Key="PrimaryColor">#FF2E3A59</Color>
+    <Color x:Key="AccentColor">#FF3E6FE2</Color>
+    <Color x:Key="AccentHoverColor">#FF4F7DF2</Color>
+    <Color x:Key="SurfaceColor">#FFFFFFFF</Color>
+    <Color x:Key="SurfaceAltColor">#FFF5F7FB</Color>
+    <Color x:Key="CardColor">#FFFFFFFF</Color>
+    <Color x:Key="BorderColor">#FFD0D7E6</Color>
+    <Color x:Key="ForegroundColor">#FF1D1E25</Color>
+    <Color x:Key="SecondaryForegroundColor">#FF4B4D59</Color>
+
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}" />
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
+    <SolidColorBrush x:Key="AccentSoftBrush" Color="#203E6FE2" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}" />
+    <SolidColorBrush x:Key="CardBrush" Color="{StaticResource CardColor}" />
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="ForegroundBrush" Color="{StaticResource ForegroundColor}" />
+    <SolidColorBrush x:Key="SecondaryForegroundBrush" Color="{StaticResource SecondaryForegroundColor}" />
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="{StaticResource ForegroundColor}" />
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="{StaticResource SecondaryForegroundColor}" />
+
+    <SolidColorBrush x:Key="GaugeInnerBrush" Color="#FFF5F7FD" />
+    <SolidColorBrush x:Key="GaugeInnerStrokeBrush" Color="#FFE6ECFA" />
+    <SolidColorBrush x:Key="GaugeInfoPillBrush" Color="#F2FFFFFF" />
+    <SolidColorBrush x:Key="GaugeInfoPillBorderBrush" Color="#E0E6F5" />
+</ResourceDictionary>

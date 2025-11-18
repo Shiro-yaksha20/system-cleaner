@@ -1,0 +1,152 @@
+<UserControl x:Class="SystemCleaner.App.Views.CleaningPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Background="Transparent">
+    <Grid Margin="24,20,24,16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="224" />
+            <ColumnDefinition Width="12" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+    <Border Grid.Column="0"
+        Background="{DynamicResource CardBrush}"
+        BorderBrush="{DynamicResource BorderBrush}"
+        BorderThickness="1"
+        CornerRadius="16"
+        Padding="16">
+            <StackPanel>
+                <TextBlock Text="Modules"
+                           FontSize="14"
+                           FontWeight="Bold"
+                           Foreground="{DynamicResource PrimaryTextBrush}"
+                           Margin="0,0,0,12" />
+                <ListBox ItemsSource="{Binding Modules}"
+                         SelectedItem="{Binding SelectedModule, Mode=TwoWay}"
+                         ItemContainerStyle="{DynamicResource ModuleListItemStyle}"
+                         BorderThickness="0"
+                         Margin="0,4,0,0"
+                         MaxHeight="320">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="12"
+                                         Height="12"
+                                         Fill="{DynamicResource AccentBrush}"
+                                         VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Name}"
+                                           Margin="8,0,0,0"
+                                           VerticalAlignment="Center"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </Border>
+
+    <Border Grid.Column="2"
+        Background="{DynamicResource CardBrush}"
+        BorderBrush="{DynamicResource BorderBrush}"
+        BorderThickness="1"
+        CornerRadius="16"
+        Padding="20">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Orientation="Vertical"
+                            Margin="0,0,0,16">
+                    <TextBlock Text="{Binding SelectedModule.Name}"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource PrimaryTextBrush}" />
+                    <TextBlock Text="{Binding SelectedModule.Items.Count, StringFormat={}{0} items}"
+                               FontSize="12"
+                               Foreground="{DynamicResource SecondaryTextBrush}"
+                               Margin="0,4,0,0" />
+                    <TextBlock Text="{Binding SelectedModule.Description}"
+                               FontSize="12"
+                               Foreground="{DynamicResource SecondaryTextBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,8,0,0" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="1"
+                            Orientation="Horizontal"
+                            Margin="0,0,0,16">
+                    <Button Content="Select All"
+                            Style="{DynamicResource SmallToolbarButtonStyle}"
+                            Command="{Binding SelectAllCommand}" />
+                    <Button Content="Clear Selection"
+                            Style="{DynamicResource SmallToolbarButtonStyle}"
+                            Command="{Binding DeselectAllCommand}" />
+                    <Button Content="Open Location"
+                            Style="{DynamicResource SmallToolbarButtonStyle}"
+                            Margin="0"
+                            Command="{Binding OpenItemLocationCommand}" />
+                </StackPanel>
+
+            <DataGrid Grid.Row="2"
+                          ItemsSource="{Binding SelectedModule.Items}"
+                          SelectedItem="{Binding SelectedModule.SelectedItem, Mode=TwoWay}"
+                          AutoGenerateColumns="False"
+                          HeadersVisibility="Column"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                  RowHeight="30"
+                  Margin="0,0,0,16"
+                  Background="{DynamicResource CardBrush}"
+                  BorderBrush="{DynamicResource BorderBrush}"
+                  BorderThickness="1"
+                  RowBackground="{DynamicResource SurfaceAltBrush}"
+                  AlternatingRowBackground="Transparent"
+                  GridLinesVisibility="None">
+                    <DataGrid.Columns>
+                        <DataGridCheckBoxColumn Binding="{Binding IsSelected, Mode=TwoWay}" Width="40" />
+                        <DataGridTextColumn Binding="{Binding DisplayName}" Header="Item" Width="*" />
+                        <DataGridTextColumn Binding="{Binding Kind}" Header="Type" Width="160" />
+                        <DataGridTextColumn Binding="{Binding SizeDisplay}" Header="Size" Width="120" />
+                        <DataGridTextColumn Binding="{Binding Path}" Header="Location" Width="260" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+        <Border Grid.Row="3"
+            Background="{DynamicResource CardBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="12"
+            Padding="12"
+            Height="120">
+                    <StackPanel>
+                        <TextBlock Text="Activity Log"
+                                   FontSize="13"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      Margin="0,4,0,0">
+                            <ItemsControl ItemsSource="{Binding LogEntries}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Message}"
+                                                   FontSize="11"
+                                                   Margin="0,2,0,0"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

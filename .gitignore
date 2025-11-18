@@ -1,0 +1,28 @@
+## Build artifacts
+bin/
+obj/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+Publish/
+publish/
+TestResults/
+
+## User-specific files
+*.user
+*.rsuser
+*.suo
+*.userprefs
+*.orig
+
+## IDE
+.vs/
+.idea/
+*.sln.docstates
+
+## Logs
+*.log
+
+## OS files
+.DS_Store
+Thumbs.db

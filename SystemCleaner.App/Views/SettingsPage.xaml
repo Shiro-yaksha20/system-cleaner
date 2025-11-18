@@ -1,0 +1,89 @@
+<UserControl x:Class="SystemCleaner.App.Views.SettingsPage"
+                         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                         mc:Ignorable="d"
+                         Background="Transparent">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="32,24,32,32"
+                                        Orientation="Vertical">
+                        <Border Background="{DynamicResource CardBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="16"
+                                        Padding="20"
+                                        Margin="0,0,0,20">
+                                <StackPanel Orientation="Vertical">
+                                        <TextBlock Text="General"
+                                                           FontSize="16"
+                                                           FontWeight="Bold"
+                                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                                        <CheckBox Margin="0,12,0,0"
+                                                          Content="Ask for confirmation before cleaning or startup changes"
+                                                          IsChecked="{Binding RequireConfirmation, Mode=TwoWay}"
+                                                          Foreground="{DynamicResource PrimaryTextBrush}"
+                                                          Cursor="Hand" />
+                                        <StackPanel Orientation="Horizontal"
+                                                                VerticalAlignment="Center"
+                                                                Margin="0,12,0,0">
+                                                <TextBlock Text="Theme"
+                                                                   VerticalAlignment="Center"
+                                                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                                                <ComboBox Width="180"
+                                                                  Margin="12,0,0,0"
+                                                                  ItemsSource="{Binding ThemeOptions}"
+                                                                  SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
+                                                                  HorizontalAlignment="Left" />
+                                        </StackPanel>
+                                </StackPanel>
+                        </Border>
+
+                        <Border Background="{DynamicResource CardBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="16"
+                                        Padding="20">
+                                <StackPanel Orientation="Vertical">
+                                        <TextBlock Text="VirusTotal Integration"
+                                                           FontSize="16"
+                                                           FontWeight="Bold"
+                                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                                        <TextBlock Margin="0,12,0,0"
+                                                           Text="Store your personal VirusTotal API key locally so the app can verify file reputations."
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                        <PasswordBox x:Name="ApiKeyBox"
+                                                                 Width="280"
+                                                                 Margin="0,12,0,0"
+                                                                 PasswordChanged="ApiKeyBox_PasswordChanged"
+                                                                 ToolTip="Enter your VirusTotal API key"
+                                                                 HorizontalAlignment="Left" />
+                                        <StackPanel Orientation="Horizontal"
+                                                                HorizontalAlignment="Left"
+                                                                Margin="0,12,0,0">
+                                                <Button Content="Save"
+                                                        Style="{DynamicResource ToolbarAccentButtonStyle}"
+                                                                Width="100"
+                                                                Click="SaveButton_Click" />
+                                                <Button Content="Clear"
+                                                        Style="{DynamicResource ToolbarButtonStyle}"
+                                                                Width="100"
+                                                                Margin="12,0,0,0"
+                                                                Click="ClearButton_Click" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal"
+                                                                Margin="0,12,0,0"
+                                                                VerticalAlignment="Center">
+                                                <TextBlock Text="Status:"
+                                                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                                                <TextBlock Text="{Binding VirusTotalApiKeyStatus}"
+                                                                   Margin="8,0,0,0"
+                                                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                                        </StackPanel>
+                                </StackPanel>
+                        </Border>
+                </StackPanel>
+        </ScrollViewer>
+</UserControl>
