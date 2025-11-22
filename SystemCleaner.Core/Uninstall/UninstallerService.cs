@@ -17,7 +17,7 @@ using Microsoft.Win32;
 namespace SystemCleaner.Core.Uninstall;
 
 [SupportedOSPlatform("windows")]
-public sealed class UninstallerService
+public sealed class UninstallerService : IUninstallerService
 {
     private readonly IReadOnlyList<ISoftwareInventoryProvider> _inventoryProviders;
     private readonly IBrowserExtensionProvider _extensionProvider;

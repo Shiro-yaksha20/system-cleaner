@@ -14,7 +14,7 @@ namespace SystemCleaner.App.ViewModels;
 
 public sealed class StartupManagerViewModel : ObservableObject
 {
-    private readonly StartupDiscoveryService _discoveryService;
+    private readonly IStartupDiscoveryService _discoveryService;
     private readonly IUserConfirmationService _confirmationService;
     private readonly RelayCommand _refreshCommand;
     private readonly RelayCommand _openEntryLocationCommand;
@@ -22,7 +22,7 @@ public sealed class StartupManagerViewModel : ObservableObject
     private string _statusMessage = "";
     private StartupEntryViewModel? _selectedEntry;
 
-    public StartupManagerViewModel(StartupDiscoveryService discoveryService, IUserConfirmationService confirmationService)
+    public StartupManagerViewModel(IStartupDiscoveryService discoveryService, IUserConfirmationService confirmationService)
     {
         _discoveryService = discoveryService ?? throw new ArgumentNullException(nameof(discoveryService));
         _confirmationService = confirmationService ?? throw new ArgumentNullException(nameof(confirmationService));

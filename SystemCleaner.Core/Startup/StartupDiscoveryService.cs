@@ -11,7 +11,7 @@ using SystemCleaner.Core.Models;
 namespace SystemCleaner.Core.Startup;
 
 [SupportedOSPlatform("windows")]
-public sealed class StartupDiscoveryService
+public sealed class StartupDiscoveryService : IStartupDiscoveryService
 {
     private sealed record RegistryLocation(
         string DisplayName,

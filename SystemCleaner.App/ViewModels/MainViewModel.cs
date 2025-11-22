@@ -26,7 +26,7 @@ namespace SystemCleaner.App.ViewModels;
 public sealed class MainViewModel : ObservableObject, IDisposable
 {
     private const int MaxLogEntries = 200;
-    private readonly CleanupService _cleanupService;
+    private readonly ICleanupService _cleanupService;
     private readonly ObservableCollection<CleanupModuleViewModel> _modules;
     private readonly RelayCommand _scanCommand;
     private readonly RelayCommand _cleanCommand;
@@ -34,7 +34,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private readonly RelayCommand _deselectAllCommand;
     private readonly RelayCommand _quickCleanCommand;
     private readonly RelayCommand _openItemLocationCommand;
-    private readonly ThemeService _themeService;
+    private readonly IThemeService _themeService;
     private readonly StartupManagerViewModel _startupManager;
     private readonly UninstallerViewModel _uninstaller;
     private readonly ObservableCollection<LogEntryViewModel> _logEntries;
@@ -43,11 +43,11 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private readonly RelayCommand _changeTabCommand;
     private readonly SystemUsageViewModel _systemUsage;
     private readonly SystemInfoViewModel _systemInfo;
-    private readonly HardwareMonitorService _hardwareMonitorService;
+    private readonly IHardwareMonitorService _hardwareMonitorService;
     private readonly IUserConfirmationService _confirmationService;
     private readonly IAppSettingsService _settingsService;
     private readonly RelayCommand _cancelCommand;
-    private readonly VirusTotalService _virusTotalService;
+    private readonly IVirusTotalService _virusTotalService;
     private readonly VirusTotalViewModel _virusTotal;
     private string? _pendingVirusTotalApiKey;
     private bool _isRestoringSettings;
@@ -66,14 +66,14 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private string _statusMessage = "Ready";
     private MainTab _selectedTab = MainTab.Overview;
 
-    public MainViewModel(CleanupService cleanupService,
-        ThemeService themeService,
-        StartupDiscoveryService startupDiscoveryService,
-        UninstallerService uninstallerService,
-        HardwareMonitorService hardwareMonitorService,
+    public MainViewModel(ICleanupService cleanupService,
+        IThemeService themeService,
+        IStartupDiscoveryService startupDiscoveryService,
+        IUninstallerService uninstallerService,
+        IHardwareMonitorService hardwareMonitorService,
         IUserConfirmationService confirmationService,
         IAppSettingsService settingsService,
-        VirusTotalService virusTotalService)
+        IVirusTotalService virusTotalService)
     {
         _cleanupService = cleanupService ?? throw new ArgumentNullException(nameof(cleanupService));
         _themeService = themeService ?? throw new ArgumentNullException(nameof(themeService));

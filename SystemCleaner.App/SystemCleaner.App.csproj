@@ -16,6 +16,7 @@
   <ItemGroup>
   <PackageReference Include="System.Management" Version="10.0.0" />
   <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.4" />
+  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

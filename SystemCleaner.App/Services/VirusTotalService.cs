@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SystemCleaner.App.Services;
 
-public sealed class VirusTotalService : IDisposable
+public sealed class VirusTotalService : IVirusTotalService
 {
     private static readonly Uri BaseUri = new("https://www.virustotal.com/api/v3/");
     private readonly HttpClient _httpClient;

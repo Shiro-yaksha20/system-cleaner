@@ -17,7 +17,7 @@ namespace SystemCleaner.App.ViewModels;
 
 public sealed class VirusTotalViewModel : ObservableObject, IDisposable
 {
-    private readonly VirusTotalService _service;
+    private readonly IVirusTotalService _service;
     private readonly RelayCommand _browseFileCommand;
     private readonly RelayCommand _scanFileCommand;
     private readonly RelayCommand _scanUrlCommand;
@@ -36,7 +36,7 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
     private string _quotaSummary = "Quota unavailable.";
     private string _quotaDetails = "Add your VirusTotal API key in Settings to track rate limits.";
 
-    public VirusTotalViewModel(VirusTotalService service)
+    public VirusTotalViewModel(IVirusTotalService service)
     {
         _service = service ?? throw new ArgumentNullException(nameof(service));
         _service.ApiKeyChanged += OnApiKeyChanged;

@@ -20,7 +20,7 @@ public sealed class UninstallerViewModel : ObservableObject
 {
     private const int OperationTimeoutMilliseconds = 600_000;
 
-    private readonly UninstallerService _service;
+    private readonly IUninstallerService _service;
     private readonly IUserConfirmationService _confirmationService;
     private readonly RelayCommand _refreshCommand;
     private readonly RelayCommand _uninstallCommand;
@@ -50,7 +50,7 @@ public sealed class UninstallerViewModel : ObservableObject
     private string _residualStatus = "Powerful scan not run.";
     private bool _showWindowsAppsOnly;
 
-    public UninstallerViewModel(UninstallerService service, IUserConfirmationService? confirmationService = null)
+    public UninstallerViewModel(IUninstallerService service, IUserConfirmationService? confirmationService = null)
     {
         _service = service ?? throw new ArgumentNullException(nameof(service));
         _confirmationService = confirmationService ?? new UserConfirmationService { RequireConfirmation = false };

@@ -7,7 +7,7 @@ using SystemCleaner.App.ViewModels;
 
 namespace SystemCleaner.App.Services;
 
-public sealed class HardwareMonitorService : IDisposable
+public sealed class HardwareMonitorService : IHardwareMonitorService
 {
     private readonly Computer _computer;
     private readonly Timer _timer;
