@@ -69,3 +69,8 @@ SystemCleaner.sln
 - The repository pins the .NET SDK via `global.json`; install the matching SDK before building locally or in CI.
 - Review `CONTRIBUTING.md`, `SECURITY.md`, and `docs/RELEASE_PROCESS.md` for expectations around commits, vulnerability disclosure, and release packaging.
 - Track user-facing updates in `CHANGELOG.md` and include changelog edits with every release-bound pull request.
+- Branch protection on `master` enforces the `build-and-test` GitHub Actions check for every pull request and keeps stale conversations resolved; approvals are optional for solo maintenance.
+
+## Operational Logs
+
+- Daily maintenance notes live under `logs/` (e.g., `logs/worklog-2025-11-19.md`) to capture CI runs, dependency updates, and branch-protection changes for future auditing.
