@@ -41,8 +41,8 @@ Install prerequisites:
 Clone and run:
 
 ```powershell
-git clone https://github.com/Shiro-yaksha20/New-folder--2-.git
-cd New-folder--2-
+git clone https://github.com/Shiro-yaksha20/system-cleaner.git
+cd system-cleaner
 
 dotnet build SystemCleaner.sln
 dotnet run --project SystemCleaner.App/SystemCleaner.App.csproj
@@ -51,13 +51,13 @@ dotnet run --project SystemCleaner.App/SystemCleaner.App.csproj
 Execute the automated tests:
 
 ```powershell
-
+dotnet test SystemCleaner.sln
 ```
 
 Publish a release build that you can distribute for manual install:
 
 ```powershell
-dotnet publish SystemCleaner.App/SystemCleaner.App.csproj -c Release -r win-x64 --self-contained false -o publish
+dotnet publish SystemCleaner.App/SystemCleaner.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish/win-x64
 ```
 
 ---
