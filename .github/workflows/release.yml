@@ -27,11 +27,11 @@ jobs:
       - name: Test
         run: dotnet test SystemCleaner.sln --configuration Release --no-build --verbosity normal
 
-      - name: Publish
-        run: dotnet publish SystemCleaner.App/SystemCleaner.App.csproj -c Release -r win-x64 --self-contained false -o publish
+      - name: Publish self-contained build
+        run: dotnet publish SystemCleaner.App/SystemCleaner.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish/win-x64
 
       - name: Archive Artifacts
-        run: Compress-Archive -Path publish\* -DestinationPath SystemCleaner-App.zip
+        run: Compress-Archive -Path publish/win-x64/* -DestinationPath SystemCleaner-win-x64.zip
         shell: pwsh
 
       - name: Create GitHub Release
@@ -51,6 +51,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: SystemCleaner-App.zip
-          asset_name: SystemCleaner-App.zip
+          asset_path: SystemCleaner-win-x64.zip
+          asset_name: SystemCleaner-win-x64.zip
           asset_content_type: application/zip

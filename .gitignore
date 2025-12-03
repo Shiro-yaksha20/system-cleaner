@@ -26,3 +26,6 @@ TestResults/
 ## OS files
 .DS_Store
 Thumbs.db
+
+## Secrets / sensitive artifacts
+virustotal.key
