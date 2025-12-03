@@ -8,11 +8,17 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
     </UserControl.Resources>
+    <UserControl.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding Uninstaller.RefreshCommand}" />
+        <KeyBinding Key="Delete" Command="{Binding Uninstaller.UninstallCommand}" />
+        <KeyBinding Key="Delete" Modifiers="Shift" Command="{Binding Uninstaller.ForceUninstallCommand}" />
+    </UserControl.InputBindings>
     <Grid Margin="32,24,32,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="*" MinHeight="150" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="350" MinHeight="150" />
         </Grid.RowDefinitions>
 
     <Border Grid.Row="0"
@@ -21,50 +27,112 @@
         BorderThickness="1"
         CornerRadius="16"
         Padding="16">
-            <DockPanel>
-                <StackPanel Orientation="Horizontal"
-                            DockPanel.Dock="Left"
-                            Width="360"
-                            VerticalAlignment="Center">
-                    <Image Width="24"
-                           Height="24"
-                           Margin="0,0,8,0"
-                           Source="https://img.icons8.com/ios-filled/50/c62828/uninstall-program.png" />
-                    <TextBox Width="220"
-                             Height="32"
-                             Margin="0,0,16,0"
-                             VerticalContentAlignment="Center"
-                             Padding="10,0"
-                             Text="{Binding Uninstaller.SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             ToolTip="Search applications" />
-                    <TextBlock Text="{Binding Uninstaller.Applications.Count, StringFormat=Status: {0} apps}"
-                               VerticalAlignment="Center"
-                               Foreground="{DynamicResource PrimaryTextBrush}"
-                               FontWeight="Bold" />
-                </StackPanel>
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="14" Opacity="0.18" ShadowDepth="2" />
+            </Border.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-                <StackPanel Orientation="Horizontal"
-                            DockPanel.Dock="Right"
+                <Grid Grid.Column="0" Margin="0,0,16,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="&#xE74D;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="26"
+                               Foreground="{DynamicResource AccentBrush}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,8,0"
+                               AutomationProperties.Name="Uninstaller Icon" />
+                                        <Grid Grid.Column="1" Margin="0,0,16,0">
+                                                <TextBlock Text="&#xE721;"
+                                                           FontFamily="Segoe MDL2 Assets"
+                                                           VerticalAlignment="Center"
+                                                           Margin="10,0,0,0"
+                                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                                           IsHitTestVisible="False"
+                                                           Panel.ZIndex="1" />
+                                                <TextBox Height="32"
+                                                                 x:Name="SearchBox"
+                                                                 VerticalContentAlignment="Center"
+                                                                 Padding="30,0,10,0"
+                                                                 Text="{Binding Uninstaller.SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                                 ToolTip="Search applications" />
+                        <TextBlock Text="Search applications..."
+                                                                     Margin="32,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   Opacity="0.6"
+                                   IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                    <StackPanel Grid.Column="2"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="0">
+                        <TextBlock Text="{Binding Uninstaller.Applications.Count, StringFormat={}{0} apps}"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   FontWeight="Bold" />
+                        <TextBlock Text="{Binding Uninstaller.SelectedCount, StringFormat=' | {0} selected'}"
+                                   Margin="8,0,0,0"
+                                   Foreground="{DynamicResource AccentBrush}"
+                                   FontWeight="SemiBold">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Uninstaller.HasSelection}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center">
                     <Button Content="{Binding Uninstaller.WindowsAppsToggleLabel}"
                             Style="{DynamicResource ToolbarButtonStyle}"
+                            MinWidth="120"
                             Command="{Binding Uninstaller.ToggleWindowsAppsCommand}" />
                     <Button Content="{Binding Uninstaller.MonitorToggleLabel}"
                             Style="{DynamicResource ToolbarButtonStyle}"
+                            MinWidth="120"
                             Command="{Binding Uninstaller.ToggleMonitorCommand}" />
                     <Button Content="Refresh"
                             Style="{DynamicResource ToolbarButtonStyle}"
+                            MinWidth="120"
                             Command="{Binding Uninstaller.RefreshCommand}" />
                     <Button Content="Uninstall"
                             Style="{DynamicResource ToolbarAccentButtonStyle}"
+                            MinWidth="120"
                             Command="{Binding Uninstaller.UninstallCommand}" />
                     <Button Content="Force Uninstall"
                             Style="{DynamicResource ToolbarAccentButtonStyle}"
-                            Margin="0"
+                            MinWidth="120"
                             Command="{Binding Uninstaller.ForceUninstallCommand}" />
                 </StackPanel>
-            </DockPanel>
+            </Grid>
         </Border>
 
         <Border Grid.Row="1"
@@ -74,73 +142,121 @@
                 BorderThickness="1"
                 CornerRadius="16"
                 Padding="8">
-            <DataGrid ItemsSource="{Binding Uninstaller.ApplicationsView}"
-                      SelectedItem="{Binding Uninstaller.SelectedApplication, Mode=TwoWay}"
-                      AutoGenerateColumns="False"
-                      CanUserAddRows="False"
-                      CanUserDeleteRows="False"
-                      HeadersVisibility="Column"
-                      RowHeight="32"
-                      Background="{DynamicResource CardBrush}"
-                      BorderThickness="0"
-                      RowBackground="{DynamicResource SurfaceAltBrush}"
-                      AlternatingRowBackground="Transparent"
-                      GridLinesVisibility="Horizontal">
-                <DataGrid.Columns>
-                    <DataGridCheckBoxColumn Binding="{Binding IsSelected, Mode=TwoWay}" Width="40" />
-                    <DataGridTextColumn Binding="{Binding Name}" Header="Name" Width="220" />
-                    <DataGridTextColumn Binding="{Binding Publisher}" Header="Publisher" Width="200" />
-                    <DataGridTextColumn Binding="{Binding Version}" Header="Version" Width="120" />
-                    <DataGridTextColumn Binding="{Binding SizeDisplay}" Header="Size" Width="110" />
-                    <DataGridTextColumn Binding="{Binding InstallDateDisplay}" Header="Install Date" Width="140" />
-                    <DataGridTextColumn Binding="{Binding InstallLocation}" Header="Location" Width="*" />
-                </DataGrid.Columns>
-            </DataGrid>
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="14" Opacity="0.18" ShadowDepth="2" />
+            </Border.Effect>
+            <Grid>
+                <DataGrid ItemsSource="{Binding Uninstaller.ApplicationsView}"
+                          SelectedItem="{Binding Uninstaller.SelectedApplication, Mode=TwoWay}"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          HeadersVisibility="Column"
+                          RowHeight="32"
+                          Background="{DynamicResource CardBrush}"
+                          BorderThickness="0"
+                          RowBackground="{DynamicResource SurfaceAltBrush}"
+                          AlternatingRowBackground="Transparent"
+                          GridLinesVisibility="Horizontal"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling"
+                          ScrollViewer.CanContentScroll="True"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#11000000" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="40">
+                            <DataGridTemplateColumn.Header>
+                                <CheckBox IsChecked="{Binding Uninstaller.IsSelectAllChecked, Mode=TwoWay}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Binding="{Binding Name, Mode=OneWay}" Header="Name" Width="*" IsReadOnly="True" />
+                        <DataGridTextColumn Binding="{Binding Publisher, Mode=OneWay}" Header="Publisher" Width="200" IsReadOnly="True" />
+                        <DataGridTextColumn Binding="{Binding Version, Mode=OneWay}" Header="Version" Width="120" IsReadOnly="True" />
+                        <DataGridTextColumn Binding="{Binding SizeDisplay, Mode=OneWay}" Header="Size" Width="90" IsReadOnly="True" />
+                        <DataGridTextColumn Binding="{Binding InstallDateDisplay, Mode=OneWay}" Header="Install Date" Width="110" IsReadOnly="True" />
+                        <DataGridTextColumn Binding="{Binding InstallLocation, Mode=OneWay}" Header="Location" Width="*" IsReadOnly="True" />
+                    </DataGrid.Columns>
+                </DataGrid>
+                <TextBlock Text="No applications found matching your criteria."
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Foreground="{DynamicResource SecondaryTextBrush}"
+                           FontSize="16"
+                           Visibility="{Binding Uninstaller.HasApplications, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+            </Grid>
         </Border>
 
-        <Grid Grid.Row="2">
+        <GridSplitter Grid.Row="2"
+                      Height="6"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Center"
+                      Background="{DynamicResource BorderBrush}"
+                      ShowsPreview="True" />
+
+        <Grid Grid.Row="3" Margin="0,12,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="16" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0">
-        <Border Background="{DynamicResource CardBrush}"
-            BorderBrush="{DynamicResource BorderBrush}"
-            BorderThickness="1"
-            CornerRadius="14"
-            Padding="16"
-                        Visibility="{Binding Uninstaller.HasSelection, Converter={StaticResource BoolToVisibility}}">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="180" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Detected Residual Items"
-                                   FontWeight="Bold"
-                                   Foreground="{DynamicResource PrimaryTextBrush}" />
-                        <StackPanel Grid.Column="1"
-                                    Orientation="Horizontal"
-                                    HorizontalAlignment="Right">
-                            <Button Content="Powerful Scan"
-                                    Width="140"
-                                    Style="{DynamicResource ToolbarAccentButtonStyle}"
-                                    Command="{Binding Uninstaller.PowerfulScanCommand}" />
-                            <Button Content="Cleanup Residuals"
-                                    Width="140"
-                                    Style="{DynamicResource ToolbarButtonStyle}"
-                                    Margin="0"
-                                    Command="{Binding Uninstaller.CleanupResidualsCommand}" />
-                        </StackPanel>
-                        <DataGrid Grid.Row="1"
-                                  Grid.ColumnSpan="2"
-                                  Margin="0,12,0,0"
-                                  ItemsSource="{Binding Uninstaller.ResidualItems}"
+            <Border Grid.Column="0"
+                    Background="{DynamicResource CardBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="14"
+                    Padding="16">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="14" Opacity="0.18" ShadowDepth="2" />
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Detected Residual Items"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource PrimaryTextBrush}" />
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right">
+                        <Button Content="Powerful Scan"
+                                MinWidth="140"
+                                Style="{DynamicResource ToolbarAccentButtonStyle}"
+                                Command="{Binding Uninstaller.PowerfulScanCommand}" />
+                        <Button Content="Cleanup Residuals"
+                                MinWidth="140"
+                                Style="{DynamicResource ToolbarButtonStyle}"
+                                Margin="0"
+                                Command="{Binding Uninstaller.CleanupResidualsCommand}" />
+                    </StackPanel>
+                    <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,12,0,0">
+                        <DataGrid ItemsSource="{Binding Uninstaller.ResidualItems}"
                                   AutoGenerateColumns="False"
                                   CanUserAddRows="False"
                                   CanUserDeleteRows="False"
@@ -151,7 +267,13 @@
                                   BorderThickness="1"
                                   RowBackground="{DynamicResource SurfaceAltBrush}"
                                   AlternatingRowBackground="Transparent"
-                                  GridLinesVisibility="Horizontal">
+                                  GridLinesVisibility="Horizontal"
+                                  EnableRowVirtualization="True"
+                                  EnableColumnVirtualization="True"
+                                  VirtualizingPanel.IsVirtualizing="True"
+                                  VirtualizingPanel.VirtualizationMode="Recycling"
+                                  ScrollViewer.CanContentScroll="True"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
                             <DataGrid.Columns>
                                 <DataGridCheckBoxColumn Binding="{Binding IsSelected, Mode=TwoWay}" Width="40" />
                                 <DataGridTextColumn Binding="{Binding ApplicationName}" Header="Application" Width="200" />
@@ -161,114 +283,194 @@
                                 <DataGridTextColumn Binding="{Binding Path}" Header="Path" Width="*" />
                             </DataGrid.Columns>
                         </DataGrid>
-                    </Grid>
-                </Border>
-
-        <Border Background="{DynamicResource CardBrush}"
-            BorderBrush="{DynamicResource BorderBrush}"
-            BorderThickness="1"
-            CornerRadius="14"
-            Padding="16"
-            Margin="0,12,0,0">
-                    <StackPanel>
-                        <TextBlock Text="Browser Plug-ins"
-                                   FontWeight="Bold"
-                                   Foreground="{DynamicResource PrimaryTextBrush}" />
-                        <ListBox ItemsSource="{Binding Uninstaller.BrowserExtensions}"
-                                 SelectedItem="{Binding Uninstaller.SelectedExtension, Mode=TwoWay}"
-                                 BorderThickness="0"
-                                 Margin="0,8,0,0"
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Margin="0,2">
-                                        <TextBlock Text="{Binding Name}"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource PrimaryTextBrush}" />
-                                        <TextBlock Text="{Binding Browser}"
-                                                   FontSize="11"
-                                                   Foreground="{DynamicResource SecondaryTextBrush}" />
-                                        <TextBlock Text="{Binding Location}"
-                                                   FontSize="10"
-                                                   Foreground="{DynamicResource SecondaryTextBrush}"
-                                                   TextTrimming="CharacterEllipsis" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                        <Button Content="Remove"
-                                Width="110"
-                                Style="{DynamicResource ToolbarButtonStyle}"
-                                Command="{Binding Uninstaller.RemoveExtensionCommand}" />
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-
-            <StackPanel Grid.Column="2">
-        <Border Background="{DynamicResource CardBrush}"
-            BorderBrush="{DynamicResource BorderBrush}"
-            BorderThickness="1"
-            CornerRadius="14"
-            Padding="16">
-                    <StackPanel>
-                        <TextBlock Text="Software Health Insights"
-                                   FontWeight="Bold"
-                                   Foreground="{DynamicResource PrimaryTextBrush}" />
-                        <ItemsControl ItemsSource="{Binding Uninstaller.HealthInsights}"
-                                      Margin="0,8,0,0">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Margin="0,0,0,6">
-                                        <TextBlock Text="{Binding Title}"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource PrimaryTextBrush}" />
-                                        <TextBlock Text="{Binding Message}"
-                                                   FontSize="11"
-                                                   TextWrapping="Wrap"
-                                                   Foreground="{DynamicResource SecondaryTextBrush}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <StackPanel Orientation="Horizontal"
-                                    Margin="0,12,0,0">
-                            <Button Content="Open Install Folder"
-                                    Width="160"
-                                    Style="{DynamicResource ToolbarButtonStyle}"
-                                    Command="{Binding Uninstaller.OpenInstallLocationCommand}" />
-                            <Button Content="Open Registry"
-                                    Width="140"
-                                    Style="{DynamicResource ToolbarButtonStyle}"
-                                    Margin="8,0,0,0"
-                                    Command="{Binding Uninstaller.OpenRegistryKeyCommand}" />
+                        <TextBlock Text="No residual items detected."
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource SecondaryTextBrush}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding Uninstaller.HasScannedResiduals}" Value="True" />
+                                                <Condition Binding="{Binding Uninstaller.HasResiduals}" Value="False" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="Run Powerful Scan to detect residuals."
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   Panel.ZIndex="1">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding Uninstaller.HasSelection}" Value="True" />
+                                                <Condition Binding="{Binding Uninstaller.HasScannedResiduals}" Value="False" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <StackPanel VerticalAlignment="Center"
+                                    HorizontalAlignment="Center"
+                                    Panel.ZIndex="1"
+                                    Visibility="{Binding Uninstaller.HasSelection, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                            <TextBlock Text="&#xE9F5;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="48"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
+                                       Opacity="0.4"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="Select applications to scan for residuals"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,12,0,0" />
                         </StackPanel>
-                    </StackPanel>
-                </Border>
+                    </Grid>
+                </Grid>
+            </Border>
 
-        <Border Background="{DynamicResource CardBrush}"
-            BorderBrush="{DynamicResource BorderBrush}"
-            BorderThickness="1"
-            CornerRadius="14"
-            Padding="16"
-            Margin="0,12,0,0">
-                    <StackPanel>
-                        <TextBlock Text="Monitor Status"
-                                   FontWeight="Bold"
-                                   Foreground="{DynamicResource PrimaryTextBrush}" />
-                        <TextBlock Text="{Binding Uninstaller.InstallMonitorStatus}"
-                                   Margin="0,6,0,0"
-                                   TextWrapping="Wrap"
-                                   Foreground="{DynamicResource SecondaryTextBrush}" />
-                        <TextBlock Text="{Binding Uninstaller.ResidualStatus}"
-                                   Margin="0,6,0,0"
-                                   TextWrapping="Wrap"
-                                   Foreground="{DynamicResource SecondaryTextBrush}" />
-                    </StackPanel>
-                </Border>
-            </StackPanel>
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Border Background="{DynamicResource CardBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            Padding="16">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="14" Opacity="0.18" ShadowDepth="2" />
+                        </Border.Effect>
+                        <StackPanel>
+                            <TextBlock Text="Browser Plug-ins"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                            <Grid Margin="0,8,0,0">
+                                <ListBox ItemsSource="{Binding Uninstaller.BrowserExtensions}"
+                                         SelectedItem="{Binding Uninstaller.SelectedExtension, Mode=TwoWay}"
+                                         BorderThickness="0"
+                                         MaxHeight="200"
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,2">
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                                                <TextBlock Text="{Binding Browser}"
+                                                           FontSize="11"
+                                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                                <TextBlock Text="{Binding Location}"
+                                                           FontSize="10"
+                                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <TextBlock Text="No browser extensions found."
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Center"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           Visibility="{Binding Uninstaller.BrowserExtensions, Converter={StaticResource CollectionEmptyToVisibilityConverter}}" />
+                            </Grid>
+                            <Button Content="Remove"
+                                    MinWidth="110"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,8,0,0"
+                                    Style="{DynamicResource ToolbarButtonStyle}"
+                                    Command="{Binding Uninstaller.RemoveExtensionCommand}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="{DynamicResource CardBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            Padding="16"
+                            Margin="0,12,0,0">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="14" Opacity="0.18" ShadowDepth="2" />
+                        </Border.Effect>
+                        <StackPanel>
+                            <TextBlock Text="Software Health Insights"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                            <Grid Margin="0,8,0,0">
+                                <ItemsControl ItemsSource="{Binding Uninstaller.HealthInsights}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,0,0,6">
+                                                <TextBlock Text="{Binding Title}"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                                                <TextBlock Text="{Binding Message}"
+                                                           FontSize="11"
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="Select an application to view health insights."
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Center"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           Visibility="{Binding Uninstaller.HealthInsights.Count, Converter={StaticResource CollectionEmptyToVisibilityConverter}}" />
+                            </Grid>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="0,12,0,0">
+                                <Button Content="Open Install Folder"
+                                        MinWidth="160"
+                                        Style="{DynamicResource ToolbarButtonStyle}"
+                                        Command="{Binding Uninstaller.OpenInstallLocationCommand}" />
+                                <Button Content="Open Registry"
+                                        MinWidth="140"
+                                        Style="{DynamicResource ToolbarButtonStyle}"
+                                        Margin="8,0,0,0"
+                                        Command="{Binding Uninstaller.OpenRegistryKeyCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="{DynamicResource CardBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            Padding="16"
+                            Margin="0,12,0,0">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="14" Opacity="0.18" ShadowDepth="2" />
+                        </Border.Effect>
+                        <StackPanel>
+                            <TextBlock Text="Monitor Status"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                            <TextBlock Text="{Binding Uninstaller.InstallMonitorStatus}"
+                                       Margin="0,6,0,0"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Text="{Binding Uninstaller.ResidualStatus}"
+                                       Margin="0,6,0,0"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource SecondaryTextBrush}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
         </Grid>
 
-        <Border Grid.RowSpan="3"
+        <Border Grid.RowSpan="4"
                 Background="#B3000000"
                 Visibility="{Binding Uninstaller.IsBusy, Converter={StaticResource BoolToVisibility}}"
                 Panel.ZIndex="20"

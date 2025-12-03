@@ -8,7 +8,7 @@ using SystemCleaner.Core.Models;
 
 namespace SystemCleaner.Core.Services;
 
-public sealed class CleanupService
+public sealed class CleanupService : ICleanupService
 {
     private readonly IReadOnlyList<ICleanupModule> _modules;
 

@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using Microsoft.Extensions.DependencyInjection;
 using SystemCleaner.App.Services;
 using SystemCleaner.App.Settings;
 using SystemCleaner.App.ViewModels;
@@ -17,6 +18,8 @@ namespace SystemCleaner.App;
 /// </summary>
 public partial class App : Application
 {
+    private ServiceProvider? _serviceProvider;
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -25,16 +28,11 @@ public partial class App : Application
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
-        var modules = CleanupModuleCatalog.CreateDefaultModules();
-        var cleanupService = new CleanupService(modules);
-        var themeService = new ThemeService();
-        var startupDiscoveryService = new StartupDiscoveryService();
-        var uninstallerService = new UninstallerService();
-        var hardwareMonitorService = new HardwareMonitorService();
-        var confirmationService = new UserConfirmationService();
-        var settingsService = new AppSettingsService();
-        var virusTotalService = new VirusTotalService();
-        var mainViewModel = new MainViewModel(cleanupService, themeService, startupDiscoveryService, uninstallerService, hardwareMonitorService, confirmationService, settingsService, virusTotalService);
+        var services = new ServiceCollection();
+        ConfigureServices(services);
+        _serviceProvider = services.BuildServiceProvider();
+
+        var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
         var mainWindow = new MainWindow
         {
             DataContext = mainViewModel
@@ -51,7 +49,23 @@ public partial class App : Application
             disposable.Dispose();
         }
 
+        _serviceProvider?.Dispose();
+
         base.OnExit(e);
+    }
+
+    private static void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton<ICleanupService>(_ => new CleanupService(CleanupModuleCatalog.CreateDefaultModules()));
+        services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<IStartupDiscoveryService, StartupDiscoveryService>();
+        services.AddSingleton<IUninstallerService, UninstallerService>();
+        services.AddSingleton<IHardwareMonitorService, HardwareMonitorService>();
+        services.AddSingleton<IUserConfirmationService, UserConfirmationService>();
+        services.AddSingleton<INotificationService, NotificationService>();
+        services.AddSingleton<IAppSettingsService, AppSettingsService>();
+        services.AddSingleton<IVirusTotalService, VirusTotalService>();
+        services.AddSingleton<MainViewModel>();
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

@@ -5,7 +5,7 @@ using AppThemeMode = SystemCleaner.App.Theming.ThemeMode;
 
 namespace SystemCleaner.App.Services;
 
-public sealed class ThemeService
+public sealed class ThemeService : IThemeService
 {
     private const string LightResourceUri = "Themes/LightTheme.xaml";
     private const string DarkResourceUri = "Themes/DarkTheme.xaml";

@@ -17,7 +17,7 @@ using Microsoft.Win32;
 namespace SystemCleaner.Core.Uninstall;
 
 [SupportedOSPlatform("windows")]
-public sealed class UninstallerService
+public sealed class UninstallerService : IUninstallerService
 {
     private readonly IReadOnlyList<ISoftwareInventoryProvider> _inventoryProviders;
     private readonly IBrowserExtensionProvider _extensionProvider;
@@ -337,19 +337,46 @@ public sealed class UninstallerService
 
             try
             {
-                if (Directory.Exists(extension.Location))
+                // For safety, we try to open the browser's extension management page
+                // Direct folder deletion can corrupt browser profiles
+                var browserSettingsUrl = extension.Browser.ToUpperInvariant() switch
                 {
-                    Directory.Delete(extension.Location, recursive: true);
-                    return true;
+                    "CHROME" => "chrome://extensions/",
+                    "EDGE" => "edge://extensions/",
+                    "FIREFOX" => "about:addons",
+                    _ => null
+                };
+
+                if (!string.IsNullOrEmpty(browserSettingsUrl))
+                {
+                    // Try to open browser extension settings
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = browserSettingsUrl,
+                            UseShellExecute = true
+                        });
+                    }
+                    catch
+                    {
+                        // Browser might not be installed or URL scheme not registered
+                    }
                 }
 
-                if (File.Exists(extension.Location))
+                // Only delete if this is a standalone extension file (like Firefox .xpi)
+                // NOT a folder that's part of the browser profile
+                if (File.Exists(extension.Location) &&
+                    extension.Location.EndsWith(".xpi", StringComparison.OrdinalIgnoreCase))
                 {
                     File.Delete(extension.Location);
                     return true;
                 }
 
-                return false;
+                // For Chrome/Edge extension folders, we DON'T delete them directly
+                // as this can corrupt the browser profile. User should remove via browser UI.
+                // Return true to indicate we've handled it (by opening the settings page)
+                return !string.IsNullOrEmpty(browserSettingsUrl);
             }
             catch
             {
@@ -424,6 +451,23 @@ public sealed class UninstallerService
     private static ProcessStartInfo BuildProcessStartInfo(string command)
     {
         var expanded = Environment.ExpandEnvironmentVariables(command ?? string.Empty).Trim();
+
+        // Detect if this is an MSI uninstall or a direct executable
+        if (expanded.StartsWith("msiexec", StringComparison.OrdinalIgnoreCase) ||
+            expanded.StartsWith("\"", StringComparison.Ordinal) ||
+            (expanded.Length > 2 && expanded[1] == ':'))
+        {
+            // For MSI or quoted/direct paths, run directly through cmd
+            return new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = string.IsNullOrEmpty(expanded) ? string.Empty : $"/c \"{expanded}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+        }
+
+        // For other commands, wrap in quotes to prevent injection
         return new ProcessStartInfo
         {
             FileName = "cmd.exe",
@@ -1278,27 +1322,48 @@ public sealed class UninstallerService
                 return false;
             }
 
-            using var baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64);
-            if (baseKey is null)
+            // Try both registry views (64-bit and 32-bit) for compatibility
+            foreach (var view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
             {
-                return false;
-            }
-
-            if (isValue)
-            {
-                var parentPath = keyPath;
-                var key = baseKey.OpenSubKey(parentPath, writable: true);
-                if (key is null)
+                try
                 {
-                    return false;
-                }
+                    using var baseKey = RegistryKey.OpenBaseKey(hive, view);
+                    if (baseKey is null)
+                    {
+                        continue;
+                    }
 
-                key.DeleteValue(valueName!, throwOnMissingValue: false);
-                return true;
+                    if (isValue)
+                    {
+                        using var key = baseKey.OpenSubKey(keyPath, writable: true);
+                        if (key is null)
+                        {
+                            continue;
+                        }
+
+                        key.DeleteValue(valueName!, throwOnMissingValue: false);
+                        return true;
+                    }
+                    else
+                    {
+                        // Check if key exists before trying to delete
+                        using var testKey = baseKey.OpenSubKey(keyPath);
+                        if (testKey is null)
+                        {
+                            continue;
+                        }
+
+                        baseKey.DeleteSubKeyTree(keyPath, throwOnMissingSubKey: false);
+                        return true;
+                    }
+                }
+                catch
+                {
+                    // Try next view
+                }
             }
 
-            baseKey.DeleteSubKeyTree(keyPath, throwOnMissingSubKey: false);
-            return true;
+            return false;
         }
 
         private static bool TryParseRegistryTarget(string raw, out RegistryHive hive, out string keyPath, out string? valueName, out bool isValue)
@@ -1344,22 +1409,50 @@ public sealed class UninstallerService
 
         public bool Cleanup(ResidualItem item, ResidualCleanupOptions options)
         {
+            // First try to stop the service if it's running
+            try
+            {
+                var stopInfo = new ProcessStartInfo
+                {
+                    FileName = "sc.exe",
+                    Arguments = $"stop \"{item.Path}\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using var stopProcess = Process.Start(stopInfo);
+                stopProcess?.WaitForExit(15000); // 15 second timeout for stop
+            }
+            catch
+            {
+                // Service might not be running, continue with deletion
+            }
+
+            // Now delete the service
             var processInfo = new ProcessStartInfo
             {
                 FileName = "sc.exe",
                 Arguments = $"delete \"{item.Path}\"",
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                RedirectStandardError = true
             };
 
-            using var process = Process.Start(processInfo);
-            if (process is null)
+            try
             {
-                throw new InvalidOperationException("Unable to launch sc.exe");
-            }
+                using var process = Process.Start(processInfo);
+                if (process is null)
+                {
+                    return false;
+                }
 
-            process.WaitForExit();
-            return process.ExitCode == 0;
+                process.WaitForExit(30000); // 30 second timeout
+                return process.ExitCode == 0;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 
@@ -1369,13 +1462,57 @@ public sealed class UninstallerService
 
         public bool Cleanup(ResidualItem item, ResidualCleanupOptions options)
         {
-            if (File.Exists(item.Path))
+            // Extract task name from the file path
+            // Path format: C:\Windows\System32\Tasks\TaskName or nested like Tasks\Folder\TaskName
+            var tasksRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "Tasks");
+            var relativePath = item.Path;
+
+            if (item.Path.StartsWith(tasksRoot, StringComparison.OrdinalIgnoreCase))
             {
-                File.Delete(item.Path);
-                return true;
+                relativePath = item.Path.Substring(tasksRoot.Length).TrimStart(Path.DirectorySeparatorChar);
             }
 
-            return false;
+            // Replace directory separators with backslashes for task path
+            var taskPath = "\\" + relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+
+            // Use schtasks to properly delete the scheduled task
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = "schtasks.exe",
+                Arguments = $"/Delete /TN \"{taskPath}\" /F",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardError = true
+            };
+
+            try
+            {
+                using var process = Process.Start(processInfo);
+                if (process is null)
+                {
+                    return false;
+                }
+
+                process.WaitForExit(30000); // 30 second timeout
+                return process.ExitCode == 0;
+            }
+            catch
+            {
+                // Fallback: try to delete the file directly (less safe but may work)
+                if (File.Exists(item.Path))
+                {
+                    try
+                    {
+                        File.Delete(item.Path);
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+                return false;
+            }
         }
     }
 
@@ -1385,10 +1522,64 @@ public sealed class UninstallerService
 
         public bool Cleanup(ResidualItem item, ResidualCleanupOptions options)
         {
-            if (File.Exists(item.Path))
+            // Check if this is a driver in the DriverStore (staged driver)
+            if (item.Path.Contains("DriverStore", StringComparison.OrdinalIgnoreCase) &&
+                item.Path.Contains("FileRepository", StringComparison.OrdinalIgnoreCase))
             {
-                File.Delete(item.Path);
-                return true;
+                // Try to find the .inf file in this driver package folder
+                var driverFolder = Path.GetDirectoryName(item.Path);
+                if (string.IsNullOrEmpty(driverFolder) || !Directory.Exists(driverFolder))
+                {
+                    return false;
+                }
+
+                // Look for .inf file to identify the driver package
+                var infFiles = Directory.GetFiles(driverFolder, "*.inf", SearchOption.TopDirectoryOnly);
+                if (infFiles.Length == 0)
+                {
+                    // No inf file found, cannot safely remove driver
+                    return false;
+                }
+
+                // Use pnputil to remove the driver package
+                foreach (var infFile in infFiles)
+                {
+                    var infName = Path.GetFileName(infFile);
+                    var processInfo = new ProcessStartInfo
+                    {
+                        FileName = "pnputil.exe",
+                        Arguments = $"/delete-driver \"{infName}\" /uninstall /force",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardError = true
+                    };
+
+                    try
+                    {
+                        using var process = Process.Start(processInfo);
+                        if (process is not null)
+                        {
+                            process.WaitForExit(60000); // 60 second timeout for driver removal
+                            if (process.ExitCode == 0)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // pnputil failed, continue to try other inf files or fallback
+                    }
+                }
+            }
+
+            // For files in System32\drivers, these are active driver files
+            // We should NOT delete them directly as it can cause system instability
+            // Only report that removal requires manual intervention
+            if (item.Path.Contains("System32\\drivers", StringComparison.OrdinalIgnoreCase))
+            {
+                // Don't delete active driver files - too dangerous
+                return false;
             }
 
             return false;
@@ -1411,10 +1602,12 @@ public sealed class UninstallerService
             }
 
             Consider(app.Name);
-            Consider(app.Publisher);
+            // Note: Publisher is intentionally NOT included as it's too broad
+            // (e.g., "Microsoft" would match unrelated apps)
             Consider(app.InstallLocation is null ? null : Path.GetFileName(app.InstallLocation));
 
-            return tokens.Where(token => token.Length > 3).ToArray();
+            // Only use tokens with 4+ characters to reduce false positives
+            return tokens.Where(token => token.Length >= 4).ToArray();
         }
 
         public static string NormalizeForComparison(string? value)

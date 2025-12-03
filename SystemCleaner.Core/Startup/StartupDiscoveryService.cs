@@ -11,7 +11,7 @@ using SystemCleaner.Core.Models;
 namespace SystemCleaner.Core.Startup;
 
 [SupportedOSPlatform("windows")]
-public sealed class StartupDiscoveryService
+public sealed class StartupDiscoveryService : IStartupDiscoveryService
 {
     private sealed record RegistryLocation(
         string DisplayName,
@@ -98,7 +98,7 @@ public sealed class StartupDiscoveryService
                             continue;
                         }
 
-                        var stateKey = $"{location.Scope}|{name}";
+                        var stateKey = BuildApprovalStateKey(location.Hive, location.ApprovalView, location.ApprovalSubKey, location.Scope, name);
                         var isEnabled = approvalStates.TryGetValue(stateKey, out var enabled) ? enabled : true;
                         var rawValueName = valueName ?? string.Empty;
                         entries.Add(new StartupEntry(
@@ -182,7 +182,8 @@ public sealed class StartupDiscoveryService
                     }
 
                     var name = string.IsNullOrWhiteSpace(valueName) ? "(Default)" : valueName;
-                    states[$"{location.Scope}|{name}"] = state.Value;
+                    var stateKey = BuildApprovalStateKey(location.Hive, location.View, location.SubKey, location.Scope, name);
+                    states[stateKey] = state.Value;
                 }
             }
             catch (Exception ex)
@@ -349,13 +350,64 @@ public sealed class StartupDiscoveryService
             {
                 2 => true,
                 3 => false,
-                var other => other != 0
+                0 => null,
+                _ => null
             };
         }
         catch
         {
             return null;
         }
+    }
+
+    private static string BuildApprovalStateKey(RegistryHive hive, RegistryView view, string subKey, string scope, string valueName)
+    {
+        var normalizedName = string.IsNullOrWhiteSpace(valueName) ? "(Default)" : valueName;
+        return $"{scope}|{(int)hive}|{(int)view}|{subKey}|{normalizedName}";
+    }
+
+    private static readonly string[] ExcludedStartupFileNames =
+    {
+        "desktop.ini",
+        "thumbs.db"
+    };
+
+    private static readonly string[] ValidStartupExtensions =
+    {
+        ".exe", ".bat", ".cmd", ".lnk", ".vbs", ".ps1"
+    };
+
+    private static bool IsSystemOrHiddenFile(string filePath, string fileName)
+    {
+        // Exclude known Windows system files
+        if (ExcludedStartupFileNames.Any(excluded => string.Equals(fileName, excluded, StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        // Check file attributes for hidden/system
+        try
+        {
+            var attributes = File.GetAttributes(filePath);
+            if ((attributes & FileAttributes.Hidden) != 0 || (attributes & FileAttributes.System) != 0)
+            {
+                return true;
+            }
+        }
+        catch
+        {
+            // If we can't read attributes, skip the file
+            return true;
+        }
+
+        // Only include files with valid startup extensions
+        var extension = Path.GetExtension(fileName);
+        if (!ValidStartupExtensions.Any(ext => string.Equals(extension, ext, StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private static void ReadStartupFolderEntries(
@@ -393,13 +445,19 @@ public sealed class StartupDiscoveryService
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var name = Path.GetFileName(file);
+
+                // Skip hidden system files like desktop.ini
+                if (IsSystemOrHiddenFile(file, name))
+                {
+                    continue;
+                }
                 var uniqueKey = $"{scope}|{name}|{file}";
                 if (!seen.Add(uniqueKey))
                 {
                     continue;
                 }
 
-                var stateKey = $"{scope}|{name}";
+                var stateKey = BuildApprovalStateKey(approvalHive, approvalView, approvalSubKey, scope, name);
                 var isEnabled = approvalStates.TryGetValue(stateKey, out var enabled) ? enabled : true;
 
                 entries.Add(new StartupEntry(

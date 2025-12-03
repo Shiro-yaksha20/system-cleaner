@@ -17,12 +17,14 @@ namespace SystemCleaner.App.ViewModels;
 
 public sealed class VirusTotalViewModel : ObservableObject, IDisposable
 {
-    private readonly VirusTotalService _service;
+    private readonly IVirusTotalService _service;
+    private readonly INotificationService _notificationService;
     private readonly RelayCommand _browseFileCommand;
     private readonly RelayCommand _scanFileCommand;
     private readonly RelayCommand _scanUrlCommand;
     private readonly RelayCommand _refreshCommand;
     private readonly RelayCommand _cancelCommand;
+    private readonly RelayCommand _refreshQuotaCommand;
     private readonly ObservableCollection<VirusTotalSubmissionViewModel> _history = new();
     private CancellationTokenSource? _operationCts;
     private CancellationTokenSource? _quotaRefreshCts;
@@ -35,18 +37,30 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
     private bool _hasQuotaInfo;
     private string _quotaSummary = "Quota unavailable.";
     private string _quotaDetails = "Add your VirusTotal API key in Settings to track rate limits.";
+    private DateTime _lastQuotaRefreshRequestUtc = DateTime.MinValue;
+    private bool _isQuotaRefreshing;
+    private const string RateLimitWaitingMessage = "VirusTotal rate limit reached. Waiting for quota...";
+    private const string RateLimitRecoveredMessage = "VirusTotal quota restored. Ready.";
+    private static readonly TimeSpan QuotaRefreshCooldown = TimeSpan.FromMinutes(2);
 
-    public VirusTotalViewModel(VirusTotalService service)
+    public VirusTotalViewModel(IVirusTotalService service, INotificationService notificationService)
     {
         _service = service ?? throw new ArgumentNullException(nameof(service));
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _service.ApiKeyChanged += OnApiKeyChanged;
         _service.QuotaUpdated += OnQuotaUpdated;
+        _service.RateLimitStateChanged += OnRateLimitStateChanged;
 
         ResetQuotaInfo();
         ApplyQuota(_service.LatestQuota);
         if (HasApiKey)
         {
-            RequestQuotaRefresh();
+            RequestQuotaRefresh(force: true);
+        }
+
+        if (_service.IsWaitingForQuota)
+        {
+            UpdateRateLimitStatus(true);
         }
 
         _browseFileCommand = new RelayCommand(BrowseFile);
@@ -54,6 +68,7 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
         _scanUrlCommand = new RelayCommand(async () => await ScanUrlAsync(), CanExecuteScanUrl);
         _refreshCommand = new RelayCommand(async () => await RefreshSelectedAsync(), CanExecuteRefresh);
         _cancelCommand = new RelayCommand(() => CancelCurrentOperation(), () => IsBusy);
+        _refreshQuotaCommand = new RelayCommand(() => RequestQuotaRefresh(force: true), () => HasApiKey && !IsBusy && !IsQuotaRefreshing);
 
         if (!HasApiKey)
         {
@@ -72,6 +87,8 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
     public ICommand RefreshCommand => _refreshCommand;
 
     public ICommand CancelCommand => _cancelCommand;
+
+    public ICommand RefreshQuotaCommand => _refreshQuotaCommand;
 
     public string? SelectedFilePath
     {
@@ -145,7 +162,29 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
         private set => SetProperty(ref _quotaDetails, value);
     }
 
+    public bool IsQuotaRefreshing
+    {
+        get => _isQuotaRefreshing;
+        private set
+        {
+            if (SetProperty(ref _isQuotaRefreshing, value))
+            {
+                _refreshQuotaCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
     public bool HasApiKey => _service.HasApiKey;
+
+    public void EnsureQuotaRefreshOnNavigate()
+    {
+        if (!HasApiKey)
+        {
+            return;
+        }
+
+        RequestQuotaRefresh();
+    }
 
     public void Dispose()
     {
@@ -157,6 +196,7 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
         _disposed = true;
         _service.ApiKeyChanged -= OnApiKeyChanged;
         _service.QuotaUpdated -= OnQuotaUpdated;
+        _service.RateLimitStateChanged -= OnRateLimitStateChanged;
         CancelCurrentOperation();
         CancelQuotaRefresh();
     }
@@ -292,12 +332,14 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
             {
                 StatusMessage = ex.Message;
                 DiagnosticLogger.Log(ex, nameof(VirusTotalViewModel));
+                PublishNotification(NotificationSeverity.Error, "VirusTotal request failed.", ex.Message);
             }
         }
         catch (Exception ex)
         {
             StatusMessage = "VirusTotal request failed.";
             DiagnosticLogger.Log(ex, nameof(VirusTotalViewModel));
+            PublishNotification(NotificationSeverity.Error, "VirusTotal request failed.", ex.Message);
         }
         finally
         {
@@ -345,18 +387,34 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
             ? existing.DetectionHeadline
             : $"Analysis complete. {existing.DetectionHeadline}";
 
-        RequestQuotaRefresh();
+        RequestQuotaRefresh(force: true);
     }
 
     private void OnQuotaUpdated(object? sender, VirusTotalQuotaInfo quota)
     {
-        if (Application.Current is { Dispatcher: { } dispatcher } && !dispatcher.CheckAccess())
-        {
-            _ = dispatcher.BeginInvoke(new Action(() => ApplyQuota(quota)));
-        }
-        else
+        RunOnUiThread(() =>
         {
             ApplyQuota(quota);
+            IsQuotaRefreshing = false;
+        });
+    }
+
+    private void OnRateLimitStateChanged(object? sender, bool isWaiting)
+    {
+        RunOnUiThread(() => UpdateRateLimitStatus(isWaiting));
+    }
+
+    private void UpdateRateLimitStatus(bool isWaiting)
+    {
+        if (isWaiting)
+        {
+            StatusMessage = RateLimitWaitingMessage;
+            return;
+        }
+
+        if (string.Equals(StatusMessage, RateLimitWaitingMessage, StringComparison.Ordinal))
+        {
+            StatusMessage = RateLimitRecoveredMessage;
         }
     }
 
@@ -395,14 +453,35 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
         QuotaDetails = BuildQuotaDetails(quota);
     }
 
-    private void RequestQuotaRefresh()
+    private void RequestQuotaRefresh(bool force = false)
     {
         if (!HasApiKey)
         {
             return;
         }
 
+        var now = DateTime.UtcNow;
+        if (!force)
+        {
+            if (IsQuotaRefreshing)
+            {
+                return;
+            }
+
+            if (now - _lastQuotaRefreshRequestUtc < QuotaRefreshCooldown)
+            {
+                return;
+            }
+        }
+
+        _lastQuotaRefreshRequestUtc = now;
+
         CancelQuotaRefresh();
+        IsQuotaRefreshing = true;
+        HasQuotaInfo = true;
+        QuotaSummary = "Fetching quota...";
+        QuotaDetails = "Contacting VirusTotal for updated rate limits.";
+
         _quotaRefreshCts = new CancellationTokenSource();
         var token = _quotaRefreshCts.Token;
 
@@ -410,17 +489,17 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
         {
             try
             {
-                await _service.RefreshQuotaAsync(token).ConfigureAwait(false);
+                await RefreshQuotaWithRetryAsync(token).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
                 // Ignore cancellation.
             }
-            catch (Exception ex)
+            finally
             {
-                DiagnosticLogger.Log(ex, nameof(VirusTotalViewModel));
+                RunOnUiThread(() => IsQuotaRefreshing = false);
             }
-        });
+        }, token);
     }
 
     private void CancelQuotaRefresh()
@@ -437,6 +516,68 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
 
         _quotaRefreshCts.Dispose();
         _quotaRefreshCts = null;
+        IsQuotaRefreshing = false;
+    }
+
+    private async Task RefreshQuotaWithRetryAsync(CancellationToken token)
+    {
+        Exception? lastError = null;
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            token.ThrowIfCancellationRequested();
+            try
+            {
+                await _service.RefreshQuotaAsync(token).ConfigureAwait(false);
+                return;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                lastError = ex;
+                DiagnosticLogger.Log(ex, nameof(VirusTotalViewModel));
+                if (attempt == 0)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(4), token).ConfigureAwait(false);
+                }
+            }
+        }
+
+        if (lastError is not null)
+        {
+            UpdateQuotaStatus("Quota refresh failed.", "VirusTotal did not return quota headers. Try again after your next scan.");
+        }
+    }
+
+    private void UpdateQuotaStatus(string summary, string details)
+    {
+        RunOnUiThread(() =>
+        {
+            QuotaSummary = summary;
+            QuotaDetails = details;
+        });
+    }
+
+    private static void RunOnUiThread(Action action)
+    {
+        if (Application.Current is { Dispatcher: { } dispatcher })
+        {
+            if (dispatcher.CheckAccess())
+            {
+                action();
+            }
+            else
+            {
+                dispatcher.BeginInvoke(action);
+            }
+        }
+        else
+        {
+            action();
+        }
     }
 
     private static string BuildQuotaSummary(VirusTotalQuotaInfo quota)
@@ -576,36 +717,42 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
             entry.MarkPending(message, submissionType, resourceName);
             SelectedSubmission = entry;
             StatusMessage = message;
+            PublishNotification(NotificationSeverity.Info, message);
             handled = true;
             DiagnosticLogger.Log(exception, nameof(VirusTotalViewModel));
         }
         else if (exception.StatusCode == HttpStatusCode.TooManyRequests)
         {
             StatusMessage = "VirusTotal rate limit reached. Wait a moment and try again.";
+            PublishNotification(NotificationSeverity.Warning, "VirusTotal rate limit reached.");
             handled = true;
             DiagnosticLogger.Log(exception, nameof(VirusTotalViewModel));
         }
         else if (exception.StatusCode == HttpStatusCode.Unauthorized)
         {
             StatusMessage = "VirusTotal rejected the API key. Double-check the key in Settings.";
+            PublishNotification(NotificationSeverity.Error, "VirusTotal rejected the API key.");
             handled = true;
             DiagnosticLogger.Log(exception, nameof(VirusTotalViewModel));
         }
         else if (exception.StatusCode == HttpStatusCode.Forbidden)
         {
             StatusMessage = "VirusTotal denied the request (HTTP 403). The key might lack file upload permissions or the quota is exhausted.";
+            PublishNotification(NotificationSeverity.Warning, "VirusTotal denied the request.");
             handled = true;
             DiagnosticLogger.Log(exception, nameof(VirusTotalViewModel));
         }
         else if (exception.StatusCode == HttpStatusCode.RequestEntityTooLarge)
         {
             StatusMessage = "VirusTotal refused the file because it exceeds the 32 MB limit for standard API keys.";
+            PublishNotification(NotificationSeverity.Warning, "File exceeds VirusTotal size limits.");
             handled = true;
             DiagnosticLogger.Log(exception, nameof(VirusTotalViewModel));
         }
         else if (exception.StatusCode == HttpStatusCode.RequestTimeout)
         {
             StatusMessage = "VirusTotal timed out while processing. Select the submission and click Refresh in a bit.";
+            PublishNotification(NotificationSeverity.Warning, "VirusTotal request timed out.");
             handled = true;
             DiagnosticLogger.Log(exception, nameof(VirusTotalViewModel));
         }
@@ -638,6 +785,11 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
         return true;
     }
 
+    private void PublishNotification(NotificationSeverity severity, string message, string? detail = null)
+    {
+        _notificationService.Publish(message, severity, detail, nameof(VirusTotalViewModel));
+    }
+
     private void CancelCurrentOperation(bool requestCancellation = true)
     {
         if (_operationCts is null)
@@ -660,6 +812,7 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
         _scanUrlCommand.RaiseCanExecuteChanged();
         _refreshCommand.RaiseCanExecuteChanged();
         _cancelCommand.RaiseCanExecuteChanged();
+        _refreshQuotaCommand.RaiseCanExecuteChanged();
     }
 
     private void OnApiKeyChanged(object? sender, EventArgs e)
@@ -675,7 +828,7 @@ public sealed class VirusTotalViewModel : ObservableObject, IDisposable
         if (HasApiKey)
         {
             ApplyQuota(_service.LatestQuota);
-            RequestQuotaRefresh();
+            RequestQuotaRefresh(force: true);
         }
     }
 }

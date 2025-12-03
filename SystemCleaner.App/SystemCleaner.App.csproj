@@ -11,11 +11,24 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <Prefer32Bit>false</Prefer32Bit>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Page Update="Views\SettingsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>UserControl</SubType>
+    </Page>
+    <Page Update="Views\VirusTotalPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>UserControl</SubType>
+    </Page>
+  </ItemGroup>
 
   <ItemGroup>
   <PackageReference Include="System.Management" Version="10.0.0" />
   <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.4" />
+  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

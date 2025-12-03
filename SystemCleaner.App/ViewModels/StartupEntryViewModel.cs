@@ -16,6 +16,7 @@ public sealed class StartupEntryViewModel : ObservableObject
     private bool _isTogglePending;
     private bool _isNotificationActive;
     private StartupVerificationStatus _verificationStatus = StartupVerificationStatus.Unknown;
+    private bool _hasApprovalState = true;
 
     public StartupEntryViewModel(StartupEntry entry)
     {
@@ -29,13 +30,24 @@ public sealed class StartupEntryViewModel : ObservableObject
 
     public string Location => Entry.Location;
 
+    public string Scope => Entry.Location;
+
+    public bool RequiresElevation => string.Equals(Entry.Location, "All Users", StringComparison.OrdinalIgnoreCase);
+
     public string Command => Entry.Command;
 
-    public bool SupportsToggle =>
+    /// <summary>
+    /// Returns true if this entry can be enabled/disabled.
+    /// For registry entries, we need RegistryView. For startup folder entries, 
+    /// we use RegistryApprovalView instead (RegistryView is null for folder entries).
+    /// </summary>
+    internal bool HasToggleMetadata =>
         Entry.RegistryHive is not null &&
-        Entry.RegistryView is not null &&
+        (Entry.RegistryView is not null || Entry.RegistryApprovalView is not null) &&
         !string.IsNullOrWhiteSpace(Entry.ApprovalSubKey) &&
         !string.IsNullOrWhiteSpace(Entry.RegistryValueName);
+
+    public bool SupportsToggle => HasToggleMetadata && _hasApprovalState;
 
     public bool IsEnabled
     {
@@ -87,5 +99,16 @@ public sealed class StartupEntryViewModel : ObservableObject
         _isNotificationActive = false;
         SetProperty(ref _isEnabled, value);
         _isNotificationActive = previous;
+    }
+
+    internal void UpdateToggleAvailability(bool hasApprovalState)
+    {
+        if (_hasApprovalState == hasApprovalState)
+        {
+            return;
+        }
+
+        _hasApprovalState = hasApprovalState;
+        RaisePropertyChanged(nameof(SupportsToggle));
     }
 }

@@ -1,76 +1,111 @@
-# SystemCleaner
+﻿# SystemCleaner
 
-A Windows system cleaner application built with .NET 9 and WPF. The solution consists of:
+SystemCleaner is a Windows desktop utility built with .NET 9 and WPF. It combines disk cleanup, system monitoring, and a modern uninstaller so users can review everything in one place before removing it.
 
-- `SystemCleaner.Core`: Core cleanup engine providing cleanup modules and services.
-- `SystemCleaner.App`: WPF front-end for scanning and cleaning temporary files, browser cache, and diagnostic data.
-- `SystemCleaner.Tests`: xUnit test project covering core functionality.
+---
 
-## Prerequisites
+## Capabilities
 
-- .NET SDK 9.0
-- Windows 10/11
+### Cleanup and storage
+- Remove Windows, user, and application temporary data
+- Clear browser caches for Edge, Chrome, Firefox, and Brave
+- Clean diagnostic logs, crash dumps, and other telemetry artifacts
+- Locate large or duplicate files that can be archived or deleted
 
-## Getting Started
+### Monitoring
+- Track CPU, GPU, memory, and disk usage in real time
+- Visualize per-core load and VRAM consumption for quick debugging
 
-1. Build the solution:
-   ```powershell
-   dotnet build SystemCleaner.sln
-   ```
+### Uninstaller and residual scan
+- Review installed software with vendor and install-date metadata
+- Remove applications and immediately scan for leftover files, folders, and registry keys
+- Inspect browser extensions to understand what auto-installs alongside software
 
-2. Run tests:
-   ```powershell
-   dotnet test SystemCleaner.sln
-   ```
+### Productivity
+- Quick Clean runs safe modules, creates a restore point, and removes clutter with one click
+- Keyboard shortcuts (F5 refresh, Delete uninstall) streamline repetitive flows
+- Activity log maintains a record of every cleanup action
 
-3. Launch the WPF application:
-   ```powershell
-   dotnet run --project SystemCleaner.App/SystemCleaner.App.csproj
-   ```
+### VirusTotal workspace
+- Submit file hashes or uploads plus URLs to VirusTotal
+- Persist scan history with engine verdicts and quota information so users can see how much of the hourly allowance remains
 
-4. Create a packaged build:
-   ```powershell
-   dotnet publish SystemCleaner.App/SystemCleaner.App.csproj -c Release -r win-x64 --self-contained false -o publish
-   ```
-   The packaged binaries will be available under `publish/`; run `SystemCleaner.App.exe` from that directory to test the Release build.
+---
 
-## Features
+## Build and run
 
-- Overview dashboard surfaces last scan results, quick clean history, and module health summaries at a glance.
-- Quick Clean workflow that creates a restore point, scans safe modules, and removes clutter in one click.
-- Cleanup modules for temporary files, browser caches, diagnostic data, large files, and duplicate files.
-- Detailed per-item review with size summaries, selection controls, Explorer shortcuts, and warnings for sensitive modules.
-- Activity log, toast-style status messaging, and persistent size totals to track what was removed.
-- Theme switching (Light/Dark/System) and a read-only startup manager with Explorer shortcuts for auditing login apps.
-- VirusTotal integration for file and URL analysis with history, engine verdicts, and live quota popover fed by the `groups/self` API.
+Install prerequisites:
+- Windows 10 version 1903 or later (Windows 11 recommended)
+- .NET 9.0 SDK (includes the runtime)
 
-## VirusTotal Usage Notes
+Clone and run:
 
-- **API Key** – Each user supplies their own VT API key under Settings. Without a key the VirusTotal tab stays read-only.
-- **Quota Display** – The bottom-right “Quota” chip hovers a detailed tooltip showing current rate limits using live data from `groups/self`. Headers still update the summary between refreshes.
-- **Upload Optimizations** – The app hashes files before upload to re-use existing analyses when VirusTotal already knows the sample.
-- **Offline Mode** – VirusTotal requires network access. For offline malware scanning consider integrating a local AV engine (e.g., Defender CLI) and swap to it when no connectivity is detected.
+```powershell
+git clone https://github.com/Shiro-yaksha20/New-folder--2-.git
+cd New-folder--2-
 
-## Project Structure
-
-```
-SystemCleaner.sln
-├── SystemCleaner.Core
-├── SystemCleaner.App
-└── SystemCleaner.Tests
+dotnet build SystemCleaner.sln
+dotnet run --project SystemCleaner.App/SystemCleaner.App.csproj
 ```
 
-## Development Workflow
+Execute the automated tests:
 
-- VS Code tasks (`.vscode/tasks.json`):
-   - `build` – runs `dotnet build SystemCleaner.sln`
-   - `test` – runs `dotnet test SystemCleaner.sln`
-- Git version control is initialized. Create feature branches for changes, merge to `main` after successful builds, and tag releases when ready (e.g., `v0.1.0`).
-- The repository pins the .NET SDK via `global.json`; install the matching SDK before building locally or in CI.
-- Review `CONTRIBUTING.md`, `SECURITY.md`, and `docs/RELEASE_PROCESS.md` for expectations around commits, vulnerability disclosure, and release packaging.
-- Track user-facing updates in `CHANGELOG.md` and include changelog edits with every release-bound pull request.
-- Branch protection on `master` enforces the `build-and-test` GitHub Actions check for every pull request and keeps stale conversations resolved; approvals are optional for solo maintenance.
+```powershell
 
-## Operational Logs
+```
 
-- Daily maintenance notes live under `logs/` (e.g., `logs/worklog-2025-11-19.md`) to capture CI runs, dependency updates, and branch-protection changes for future auditing.
+Publish a release build that you can distribute for manual install:
+
+```powershell
+dotnet publish SystemCleaner.App/SystemCleaner.App.csproj -c Release -r win-x64 --self-contained false -o publish
+```
+
+---
+
+## Working with the app
+
+1. Start SystemCleaner with elevated permissions so hardware sensors and uninstall operations can run without prompts.
+2. Press **Scan** to populate each module (cleanup, residuals, browser extensions, etc.).
+3. Review detections in the grid and toggle the items you want to remove.
+4. Press **Clean** to execute the selected operations. Status updates stream into the activity log.
+
+### Quick Clean
+Quick Clean is meant for routine maintenance. It focuses on low-risk modules, sets a restore point, and performs the scan and clean in one action.
+
+### VirusTotal
+Provide a VirusTotal API key under **Settings → VirusTotal Integration**. Once configured, drag files or paste URLs into the VirusTotal tab to submit them, then monitor the verdicts and quota chip.
+
+---
+
+## Project layout
+
+```
+SystemCleaner/
+├── SystemCleaner.App/         # WPF client (Views, ViewModels, services, converters)
+├── SystemCleaner.Core/        # Cleanup modules, startup manager, uninstall services
+└── SystemCleaner.Tests/       # xUnit tests covering core logic
+```
+
+Supporting documentation lives under `docs/`, and publish artifacts default to `publish/`.
+
+---
+
+## Configuration and logs
+
+- Settings: `%LOCALAPPDATA%\SystemCleaner\settings.json`
+- Diagnostic logs: `%LOCALAPPDATA%\SystemCleaner\logs\`
+
+---
+
+## Known limitations
+
+**AMD Ryzen Mobile CPU telemetry** – Some ASUS ROG laptops expose temperature and clock sensors only through proprietary Armoury Crate interfaces. LibreHardwareMonitor cannot read those buses, so SystemCleaner reports "N/A" for the affected metrics even though CPU load remains available.
+
+---
+
+## Credits
+
+- [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) for sensor access
+- [VirusTotal](https://www.virustotal.com/) for file and URL scanning
+- [Icons8](https://icons8.com/) for UI iconography used inside the application
+

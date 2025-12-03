@@ -7,7 +7,7 @@ using SystemCleaner.App.ViewModels;
 
 namespace SystemCleaner.App.Services;
 
-public sealed class HardwareMonitorService : IDisposable
+public sealed class HardwareMonitorService : IHardwareMonitorService
 {
     private readonly Computer _computer;
     private readonly Timer _timer;
@@ -122,7 +122,12 @@ public sealed class HardwareSnapshotEventArgs : EventArgs
     public HardwareSnapshot Snapshot { get; }
 }
 
-public sealed record HardwareSnapshot(DateTime Timestamp, HardwareSnapshot.ComponentSnapshot? Cpu, HardwareSnapshot.ComponentSnapshot? Gpu, IReadOnlyList<HardwareSnapshot.StorageSnapshot> Storage)
+public sealed record HardwareSnapshot(
+    DateTime Timestamp,
+    HardwareSnapshot.ComponentSnapshot? Cpu,
+    HardwareSnapshot.ComponentSnapshot? Gpu,
+    HardwareSnapshot.MemorySnapshot? Memory,
+    IReadOnlyList<HardwareSnapshot.StorageSnapshot> Storage)
 {
     public sealed record ComponentSnapshot(
         string Name,
@@ -134,6 +139,19 @@ public sealed record HardwareSnapshot(DateTime Timestamp, HardwareSnapshot.Compo
         double? PowerWatts)
     {
         public double? DisplayUsage => UsagePercent;
+
+        public bool HasTelemetry => UsagePercent.HasValue || TemperatureCelsius.HasValue || CoreClockMhz.HasValue ||
+                                     MemoryClockMhz.HasValue || VoltageMillivolts.HasValue || PowerWatts.HasValue;
+    }
+
+    public sealed record MemorySnapshot(
+        string Name,
+        double? UsagePercent,
+        double? UsedGigabytes,
+        double? AvailableGigabytes,
+        double? TotalGigabytes)
+    {
+        public bool HasTelemetry => UsagePercent.HasValue || UsedGigabytes.HasValue || AvailableGigabytes.HasValue || TotalGigabytes.HasValue;
     }
 
     public sealed record StorageSnapshot(
@@ -152,6 +170,7 @@ public sealed record HardwareSnapshot(DateTime Timestamp, HardwareSnapshot.Compo
 
         ComponentSnapshot? cpu = null;
         ComponentSnapshot? gpu = null;
+        MemorySnapshot? memory = null;
         var storage = new List<StorageSnapshot>();
 
         foreach (var hardware in hardwareItems)
@@ -166,13 +185,16 @@ public sealed record HardwareSnapshot(DateTime Timestamp, HardwareSnapshot.Compo
                 case HardwareType.GpuIntel:
                     gpu = BuildComponentSnapshot(hardware, includePower: true);
                     break;
+                case HardwareType.Memory:
+                    memory = BuildMemorySnapshot(hardware);
+                    break;
                 case HardwareType.Storage:
                     storage.Add(BuildStorageSnapshot(hardware));
                     break;
             }
         }
 
-        return new HardwareSnapshot(DateTime.UtcNow, cpu, gpu, storage);
+        return new HardwareSnapshot(DateTime.UtcNow, cpu, gpu, memory, storage);
     }
 
     private static ComponentSnapshot BuildComponentSnapshot(IHardware hardware, bool includePower)
@@ -190,18 +212,85 @@ public sealed record HardwareSnapshot(DateTime Timestamp, HardwareSnapshot.Compo
 
         var sensors = hardware.Sensors;
         var name = hardware.Name;
-        var usage = FindValue(sensors, SensorType.Load, sensor => sensor.Name.Contains("Total", StringComparison.OrdinalIgnoreCase))
-                    ?? FindValue(sensors, SensorType.Load);
-        var temp = FindValue(sensors, SensorType.Temperature);
-        var coreClock = FindValue(sensors, SensorType.Clock, sensor => sensor.Name.Contains("Core", StringComparison.OrdinalIgnoreCase))
-                        ?? FindValue(sensors, SensorType.Clock);
-        var memClock = FindValue(sensors, SensorType.Clock, sensor => sensor.Name.Contains("Memory", StringComparison.OrdinalIgnoreCase));
-        var voltage = FindValue(sensors, SensorType.Voltage, sensor => sensor.Name.Contains("Core", StringComparison.OrdinalIgnoreCase))
-                      ?? FindValue(sensors, SensorType.Voltage);
-        var power = includePower ? FindValue(sensors, SensorType.Power, sensor => sensor.Name.Contains("Package", StringComparison.OrdinalIgnoreCase))
-                                 ?? FindValue(sensors, SensorType.Power) : null;
+        var usage = CleanValue(FindValue(sensors, SensorType.Load, sensor => sensor.Name.Contains("Total", StringComparison.OrdinalIgnoreCase))
+                               ?? FindValue(sensors, SensorType.Load));
+        var temp = CleanValue(FindValue(sensors, SensorType.Temperature), allowZero: false);
+        var coreClock = CleanValue(FindValue(sensors, SensorType.Clock, sensor => sensor.Name.Contains("Core", StringComparison.OrdinalIgnoreCase))
+                                   ?? FindValue(sensors, SensorType.Clock), allowZero: false);
+        var memClock = CleanValue(FindValue(sensors, SensorType.Clock, sensor => sensor.Name.Contains("Memory", StringComparison.OrdinalIgnoreCase)), allowZero: false);
+        var voltage = CleanValue(FindValue(sensors, SensorType.Voltage, sensor => sensor.Name.Contains("Core", StringComparison.OrdinalIgnoreCase))
+                                 ?? FindValue(sensors, SensorType.Voltage), allowZero: false);
+        var power = includePower
+            ? CleanValue(FindValue(sensors, SensorType.Power, sensor => sensor.Name.Contains("Package", StringComparison.OrdinalIgnoreCase))
+                         ?? FindValue(sensors, SensorType.Power), allowZero: false)
+            : null;
 
         return new ComponentSnapshot(name, usage, temp, coreClock, memClock, voltage, power);
+
+        static double? CleanValue(double? value, bool allowZero = true)
+        {
+            if (!value.HasValue)
+            {
+                return null;
+            }
+
+            var sample = value.Value;
+            if (double.IsNaN(sample) || double.IsInfinity(sample))
+            {
+                return null;
+            }
+
+            if (!allowZero && sample <= 0)
+            {
+                return null;
+            }
+
+            return sample;
+        }
+    }
+
+    private static MemorySnapshot BuildMemorySnapshot(IHardware hardware)
+    {
+        static double? FindValue(IEnumerable<ISensor> sensors, SensorType type, Func<ISensor, bool>? predicate = null)
+        {
+            var query = sensors.Where(sensor => sensor.SensorType == type);
+            if (predicate is not null)
+            {
+                query = query.Where(predicate);
+            }
+
+            return query.Select(sensor => (double?)sensor.Value).FirstOrDefault(value => value.HasValue);
+        }
+
+        var sensors = hardware.Sensors;
+        var usage = CleanValue(FindValue(sensors, SensorType.Load, sensor => sensor.Name.Contains("Memory", StringComparison.OrdinalIgnoreCase))
+                               ?? FindValue(sensors, SensorType.Load));
+        var used = CleanValue(FindValue(sensors, SensorType.Data, sensor => sensor.Name.Contains("Used", StringComparison.OrdinalIgnoreCase)));
+        var available = CleanValue(FindValue(sensors, SensorType.Data, sensor => sensor.Name.Contains("Available", StringComparison.OrdinalIgnoreCase)));
+        var total = CleanValue(FindValue(sensors, SensorType.Data, sensor => sensor.Name.Contains("Total", StringComparison.OrdinalIgnoreCase)));
+
+        if (!total.HasValue && used.HasValue && available.HasValue)
+        {
+            total = used + available;
+        }
+
+        return new MemorySnapshot(hardware.Name, usage, used, available, total);
+
+        static double? CleanValue(double? value)
+        {
+            if (!value.HasValue)
+            {
+                return null;
+            }
+
+            var sample = value.Value;
+            if (double.IsNaN(sample) || double.IsInfinity(sample))
+            {
+                return null;
+            }
+
+            return sample;
+        }
     }
 
     private static StorageSnapshot BuildStorageSnapshot(IHardware hardware)

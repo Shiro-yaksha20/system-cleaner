@@ -9,13 +9,18 @@ using System.Threading.Tasks;
 
 namespace SystemCleaner.App.Services;
 
-public sealed class VirusTotalService : IDisposable
+public sealed class VirusTotalService : IVirusTotalService
 {
     private static readonly Uri BaseUri = new("https://www.virustotal.com/api/v3/");
     private readonly HttpClient _httpClient;
     private string? _apiKey;
     private bool _disposed;
     private VirusTotalQuotaInfo _latestQuota = VirusTotalQuotaInfo.Empty;
+    private readonly SemaphoreSlim _rateLock = new(1, 1);
+    private readonly Queue<DateTimeOffset> _requestWindow = new();
+    private bool _isWaitingForQuota;
+    private const int MaxRequestsPerWindow = 4;
+    private static readonly TimeSpan RateWindow = TimeSpan.FromMinutes(1);
 
     public VirusTotalService()
     {
@@ -30,7 +35,11 @@ public sealed class VirusTotalService : IDisposable
 
     public event EventHandler<VirusTotalQuotaInfo>? QuotaUpdated;
 
+    public event EventHandler<bool>? RateLimitStateChanged;
+
     public bool HasApiKey => !string.IsNullOrWhiteSpace(_apiKey);
+
+    public bool IsWaitingForQuota => _isWaitingForQuota;
 
     public VirusTotalQuotaInfo LatestQuota => _latestQuota;
 
@@ -85,13 +94,24 @@ public sealed class VirusTotalService : IDisposable
             throw new FileNotFoundException("File not found for VirusTotal analysis.", filePath);
         }
 
+        // Optimization: Check if VT already has results for this file hash (saves upload time)
+        var sha256 = await ComputeSha256Async(filePath, token).ConfigureAwait(false);
+        if (!string.IsNullOrWhiteSpace(sha256))
+        {
+            var existing = await GetFileDetailsAsync(sha256, token).ConfigureAwait(false);
+            if (existing is not null && HasMeaningfulResults(existing))
+            {
+                return existing;
+            }
+        }
+
         await using var fileStream = File.OpenRead(filePath);
         using var multipart = new MultipartFormDataContent
         {
             { new StreamContent(fileStream), "file", Path.GetFileName(filePath) }
         };
 
-        using var response = await _httpClient.PostAsync("files", multipart, token).ConfigureAwait(false);
+        using var response = await PostAsync("files", multipart, token).ConfigureAwait(false);
         UpdateQuota(response);
         await EnsureSuccessAsync(response, token).ConfigureAwait(false);
         var analysisId = await ExtractAnalysisIdAsync(response, token).ConfigureAwait(false);
@@ -129,7 +149,7 @@ public sealed class VirusTotalService : IDisposable
             ["url"] = url
         });
 
-        using var response = await _httpClient.PostAsync("urls", content, token).ConfigureAwait(false);
+        using var response = await PostAsync("urls", content, token).ConfigureAwait(false);
         UpdateQuota(response);
         await EnsureSuccessAsync(response, token).ConfigureAwait(false);
         var analysisId = await ExtractAnalysisIdAsync(response, token).ConfigureAwait(false);
@@ -153,8 +173,9 @@ public sealed class VirusTotalService : IDisposable
 
     private async Task<VirusTotalAnalysis?> WaitForAnalysisAsync(string analysisId, bool allowFileShortcut, CancellationToken token)
     {
-        const int maxAttempts = 15;
-        const int delaySeconds = 2;
+        const int maxAttempts = 10;
+        // Start with shorter delays, use exponential backoff
+        var delayMs = 500;
 
         for (var attempt = 0; attempt < maxAttempts; attempt++)
         {
@@ -181,7 +202,9 @@ public sealed class VirusTotalService : IDisposable
                 return analysis;
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(delaySeconds), token).ConfigureAwait(false);
+            await Task.Delay(delayMs, token).ConfigureAwait(false);
+            // Exponential backoff: 500ms -> 1s -> 2s -> 4s (capped)
+            delayMs = Math.Min(delayMs * 2, 4000);
         }
 
         var finalAnalysis = await GetAnalysisAsync(analysisId, token).ConfigureAwait(false);
@@ -256,7 +279,7 @@ public sealed class VirusTotalService : IDisposable
     {
         try
         {
-            using var response = await _httpClient.GetAsync(endpoint, token).ConfigureAwait(false);
+            using var response = await GetAsync(endpoint, token).ConfigureAwait(false);
             UpdateQuota(response);
 
             if (response.StatusCode == HttpStatusCode.NotFound)
@@ -314,7 +337,7 @@ public sealed class VirusTotalService : IDisposable
 
     private async Task<VirusTotalAnalysis?> GetAnalysisAsync(string analysisId, CancellationToken token)
     {
-        using var response = await _httpClient.GetAsync($"analyses/{analysisId}", token).ConfigureAwait(false);
+        using var response = await GetAsync($"analyses/{analysisId}", token).ConfigureAwait(false);
         UpdateQuota(response);
         await EnsureSuccessAsync(response, token).ConfigureAwait(false);
         await using var stream = await response.Content.ReadAsStreamAsync(token).ConfigureAwait(false);
@@ -328,7 +351,7 @@ public sealed class VirusTotalService : IDisposable
             return null;
         }
 
-        using var response = await _httpClient.GetAsync($"files/{resourceId}", token).ConfigureAwait(false);
+        using var response = await GetAsync($"files/{resourceId}", token).ConfigureAwait(false);
         UpdateQuota(response);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
@@ -347,6 +370,12 @@ public sealed class VirusTotalService : IDisposable
         }
 
         if (!string.Equals(analysis.SubmissionType, "File", StringComparison.OrdinalIgnoreCase))
+        {
+            return analysis;
+        }
+
+        // Skip enrichment if we already have meaningful results (saves an API call)
+        if (HasMeaningfulResults(analysis))
         {
             return analysis;
         }
@@ -378,7 +407,7 @@ public sealed class VirusTotalService : IDisposable
         return null;
     }
 
-    private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken token)
+    private async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken token)
     {
         if (response.IsSuccessStatusCode)
         {
@@ -388,6 +417,21 @@ public sealed class VirusTotalService : IDisposable
         var statusCode = response.StatusCode;
         string? message = null;
         string? rawContent = null;
+
+        if (statusCode == HttpStatusCode.TooManyRequests)
+        {
+            var retryDelay = GetRetryAfterDelay(response) ?? TimeSpan.FromSeconds(15);
+            UpdateRateLimitState(true);
+            try
+            {
+                await Task.Delay(retryDelay, token).ConfigureAwait(false);
+            }
+            finally
+            {
+                UpdateRateLimitState(false);
+            }
+        }
+
         try
         {
             if (response.Content is not null)
@@ -786,6 +830,119 @@ public sealed class VirusTotalService : IDisposable
             Reputation = fileDetails.Reputation ?? original.Reputation,
             Engines = fileDetails.Engines.Count > 0 ? fileDetails.Engines : original.Engines
         };
+    }
+
+    private async Task<HttpResponseMessage> PostAsync(string relativeUri, HttpContent content, CancellationToken token)
+    {
+        await WaitForRequestSlotAsync(token).ConfigureAwait(false);
+        return await _httpClient.PostAsync(relativeUri, content, token).ConfigureAwait(false);
+    }
+
+    private async Task<HttpResponseMessage> GetAsync(string relativeUri, CancellationToken token)
+    {
+        await WaitForRequestSlotAsync(token).ConfigureAwait(false);
+        return await _httpClient.GetAsync(relativeUri, token).ConfigureAwait(false);
+    }
+
+    private async Task WaitForRequestSlotAsync(CancellationToken token)
+    {
+        while (true)
+        {
+            TimeSpan? delay = null;
+            await _rateLock.WaitAsync(token).ConfigureAwait(false);
+            try
+            {
+                var now = DateTimeOffset.UtcNow;
+                while (_requestWindow.Count > 0 && now - _requestWindow.Peek() >= RateWindow)
+                {
+                    _requestWindow.Dequeue();
+                }
+
+                if (_requestWindow.Count < MaxRequestsPerWindow)
+                {
+                    _requestWindow.Enqueue(now);
+                    if (_isWaitingForQuota)
+                    {
+                        UpdateRateLimitState(false);
+                    }
+
+                    return;
+                }
+
+                delay = (_requestWindow.Peek() + RateWindow) - now;
+            }
+            finally
+            {
+                _rateLock.Release();
+            }
+
+            if (!delay.HasValue || delay.Value <= TimeSpan.Zero)
+            {
+                continue;
+            }
+
+            UpdateRateLimitState(true);
+            await Task.Delay(delay.Value, token).ConfigureAwait(false);
+        }
+    }
+
+    private static TimeSpan? GetRetryAfterDelay(HttpResponseMessage response)
+    {
+        if (response.Headers.RetryAfter is { } retryAfter)
+        {
+            if (retryAfter.Delta is TimeSpan delta && delta > TimeSpan.Zero)
+            {
+                return delta;
+            }
+
+            if (retryAfter.Date is DateTimeOffset date)
+            {
+                var wait = date - DateTimeOffset.UtcNow;
+                if (wait > TimeSpan.Zero)
+                {
+                    return wait;
+                }
+            }
+        }
+
+        if (response.Headers.TryGetValues("Retry-After", out var values))
+        {
+            foreach (var value in values)
+            {
+                if (int.TryParse(value, out var seconds) && seconds > 0)
+                {
+                    return TimeSpan.FromSeconds(seconds);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private void UpdateRateLimitState(bool waiting)
+    {
+        if (_isWaitingForQuota == waiting)
+        {
+            return;
+        }
+
+        _isWaitingForQuota = waiting;
+        RateLimitStateChanged?.Invoke(this, waiting);
+    }
+
+    private static async Task<string?> ComputeSha256Async(string filePath, CancellationToken token)
+    {
+        try
+        {
+            await using var stream = File.OpenRead(filePath);
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var hashBytes = await sha256.ComputeHashAsync(stream, token).ConfigureAwait(false);
+            return Convert.ToHexString(hashBytes).ToLowerInvariant();
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private void EnsureApiKey()

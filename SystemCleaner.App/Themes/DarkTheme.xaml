@@ -14,6 +14,7 @@
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
     <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
     <SolidColorBrush x:Key="AccentSoftBrush" Color="#303F8BFF" />
+    <SolidColorBrush x:Key="AccentGlowBrush" Color="#995BA8FF" />
     <LinearGradientBrush x:Key="SurfaceBrush" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Color="#FF0A1220" Offset="0.0" />
         <GradientStop Color="#FF0F192B" Offset="0.45" />
