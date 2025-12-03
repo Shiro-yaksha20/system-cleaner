@@ -304,6 +304,7 @@ public sealed class SystemInfoViewModel : ObservableObject
     private static IEnumerable<GraphicsAdapterViewModel> QueryGraphicsAdapters()
     {
         var adapters = new List<GraphicsAdapterViewModel>();
+        var dxgiAdapters = DxgiAdapterReader.GetAdapters();
 
         try
         {
@@ -311,10 +312,15 @@ public sealed class SystemInfoViewModel : ObservableObject
                 "SELECT Name, AdapterRAM, DriverVersion, DriverDate, CurrentHorizontalResolution, CurrentVerticalResolution, CurrentRefreshRate, VideoModeDescription FROM Win32_VideoController");
             foreach (ManagementObject adapter in searcher.Get())
             {
+                var adapterName = adapter["Name"]?.ToString() ?? "Unknown";
+                var overrideMemory = TryResolveAdapterMemory(adapterName, dxgiAdapters);
+
                 adapters.Add(new GraphicsAdapterViewModel
                 {
-                    Name = adapter["Name"]?.ToString() ?? "Unknown",
-                    Memory = FormatAdapterMemory(adapter["AdapterRAM"]),
+                    Name = adapterName,
+                    Memory = overrideMemory.HasValue
+                        ? FormatAdapterMemory(overrideMemory.Value)
+                        : FormatAdapterMemory(adapter["AdapterRAM"]),
                     DriverVersion = adapter["DriverVersion"]?.ToString() ?? "—",
                     DriverDate = FormatDriverDate(adapter["DriverDate"]?.ToString()),
                     Resolution = FormatResolution(adapter["CurrentHorizontalResolution"], adapter["CurrentVerticalResolution"], adapter["VideoModeDescription"]),
@@ -331,6 +337,41 @@ public sealed class SystemInfoViewModel : ObservableObject
         }
 
         return adapters;
+    }
+
+    private static ulong? TryResolveAdapterMemory(string? adapterName, IReadOnlyList<DxgiAdapterReader.AdapterInfo> dxgiAdapters)
+    {
+        if (dxgiAdapters.Count == 0)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(adapterName))
+        {
+            return dxgiAdapters.Count == 1 ? dxgiAdapters[0].DedicatedVideoMemory : null;
+        }
+
+        var normalized = DxgiAdapterReader.NormalizeAdapterName(adapterName);
+        if (string.IsNullOrEmpty(normalized))
+        {
+            return dxgiAdapters.Count == 1 ? dxgiAdapters[0].DedicatedVideoMemory : null;
+        }
+
+        foreach (var adapter in dxgiAdapters)
+        {
+            if (string.IsNullOrEmpty(adapter.NormalizedName))
+            {
+                continue;
+            }
+
+            if (normalized.Contains(adapter.NormalizedName, StringComparison.Ordinal) ||
+                adapter.NormalizedName.Contains(normalized, StringComparison.Ordinal))
+            {
+                return adapter.DedicatedVideoMemory;
+            }
+        }
+
+        return dxgiAdapters.Count == 1 ? dxgiAdapters[0].DedicatedVideoMemory : null;
     }
 
     private static string FormatResolution(object? horizontal, object? vertical, object? fallback)
