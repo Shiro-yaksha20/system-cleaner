@@ -8,6 +8,11 @@ Publish/
 publish/
 TestResults/
 
+# Local-only utilities and notes
+SnapshotDump/
+UIUpdates/
+logs/
+
 ## User-specific files
 *.user
 *.rsuser
