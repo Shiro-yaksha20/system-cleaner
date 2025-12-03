@@ -14,7 +14,7 @@ namespace SystemCleaner.App.Converters
             {
                 return count == 0 ? Visibility.Visible : Visibility.Collapsed;
             }
-            
+
             if (value is ICollection collection)
             {
                 return collection.Count == 0 ? Visibility.Visible : Visibility.Collapsed;

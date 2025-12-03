@@ -366,7 +366,7 @@ public sealed class UninstallerService : IUninstallerService
 
                 // Only delete if this is a standalone extension file (like Firefox .xpi)
                 // NOT a folder that's part of the browser profile
-                if (File.Exists(extension.Location) && 
+                if (File.Exists(extension.Location) &&
                     extension.Location.EndsWith(".xpi", StringComparison.OrdinalIgnoreCase))
                 {
                     File.Delete(extension.Location);
@@ -451,7 +451,7 @@ public sealed class UninstallerService : IUninstallerService
     private static ProcessStartInfo BuildProcessStartInfo(string command)
     {
         var expanded = Environment.ExpandEnvironmentVariables(command ?? string.Empty).Trim();
-        
+
         // Detect if this is an MSI uninstall or a direct executable
         if (expanded.StartsWith("msiexec", StringComparison.OrdinalIgnoreCase) ||
             expanded.StartsWith("\"", StringComparison.Ordinal) ||
@@ -466,7 +466,7 @@ public sealed class UninstallerService : IUninstallerService
                 CreateNoWindow = true
             };
         }
-        
+
         // For other commands, wrap in quotes to prevent injection
         return new ProcessStartInfo
         {
@@ -1419,7 +1419,7 @@ public sealed class UninstallerService : IUninstallerService
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
-                
+
                 using var stopProcess = Process.Start(stopInfo);
                 stopProcess?.WaitForExit(15000); // 15 second timeout for stop
             }
@@ -1466,12 +1466,12 @@ public sealed class UninstallerService : IUninstallerService
             // Path format: C:\Windows\System32\Tasks\TaskName or nested like Tasks\Folder\TaskName
             var tasksRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "Tasks");
             var relativePath = item.Path;
-            
+
             if (item.Path.StartsWith(tasksRoot, StringComparison.OrdinalIgnoreCase))
             {
                 relativePath = item.Path.Substring(tasksRoot.Length).TrimStart(Path.DirectorySeparatorChar);
             }
-            
+
             // Replace directory separators with backslashes for task path
             var taskPath = "\\" + relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
