@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -16,22 +17,29 @@ public sealed class StartupManagerViewModel : ObservableObject
 {
     private readonly IStartupDiscoveryService _discoveryService;
     private readonly IUserConfirmationService _confirmationService;
+    private readonly INotificationService _notificationService;
     private readonly RelayCommand _refreshCommand;
     private readonly RelayCommand _openEntryLocationCommand;
     private bool _isBusy;
     private string _statusMessage = "";
     private StartupEntryViewModel? _selectedEntry;
+    private bool _hasEntries;
+    private bool _hasIssues;
 
-    public StartupManagerViewModel(IStartupDiscoveryService discoveryService, IUserConfirmationService confirmationService)
+    public StartupManagerViewModel(IStartupDiscoveryService discoveryService, IUserConfirmationService confirmationService, INotificationService notificationService)
     {
         _discoveryService = discoveryService ?? throw new ArgumentNullException(nameof(discoveryService));
         _confirmationService = confirmationService ?? throw new ArgumentNullException(nameof(confirmationService));
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         Entries = new ObservableCollection<StartupEntryViewModel>();
+        Issues = new ObservableCollection<string>();
         _refreshCommand = new RelayCommand(async () => await RefreshAsync(), () => !IsBusy);
         _openEntryLocationCommand = new RelayCommand(OpenSelectedEntryLocation, () => SelectedEntry is not null);
     }
 
     public ObservableCollection<StartupEntryViewModel> Entries { get; }
+
+    public ObservableCollection<string> Issues { get; }
 
     public bool IsBusy
     {
@@ -49,6 +57,18 @@ public sealed class StartupManagerViewModel : ObservableObject
     {
         get => _statusMessage;
         private set => SetProperty(ref _statusMessage, value);
+    }
+
+    public bool HasEntries
+    {
+        get => _hasEntries;
+        private set => SetProperty(ref _hasEntries, value);
+    }
+
+    public bool HasIssues
+    {
+        get => _hasIssues;
+        private set => SetProperty(ref _hasIssues, value);
     }
 
     public ICommand RefreshCommand => _refreshCommand;
@@ -76,17 +96,21 @@ public sealed class StartupManagerViewModel : ObservableObject
 
         IsBusy = true;
         StatusMessage = "Loading startup entries...";
+        ClearIssues();
         DiagnosticLogger.LogInfo("Startup refresh requested", nameof(StartupManagerViewModel));
 
         try
         {
             var result = await _discoveryService.GetStartupEntriesAsync(cancellationToken);
+            var aggregatedIssues = new List<string>(result.Issues);
             ResetEntrySubscriptions();
             Entries.Clear();
             foreach (var startupEntry in result.Entries)
             {
-                Entries.Add(CreateEntryViewModel(startupEntry));
+                var viewModel = await CreateEntryViewModelAsync(startupEntry, aggregatedIssues, cancellationToken);
+                Entries.Add(viewModel);
             }
+            HasEntries = Entries.Count > 0;
 
             SelectedEntry = Entries.FirstOrDefault();
             if (result.Entries.Count == 0)
@@ -99,37 +123,78 @@ public sealed class StartupManagerViewModel : ObservableObject
                 StatusMessage = $"Loaded {result.Entries.Count} entries{warningSuffix}.";
             }
 
+            ReplaceIssues(aggregatedIssues);
+
             DiagnosticLogger.LogInfo($"Startup refresh completed. Entries={result.Entries.Count}; Warnings={result.Issues.Count}", nameof(StartupManagerViewModel));
 
             if (result.Issues.Count > 0)
             {
                 var joined = string.Join("; ", result.Issues);
                 DiagnosticLogger.LogInfo($"Startup discovery warnings: {joined}", nameof(StartupManagerViewModel));
+                PublishNotification(NotificationSeverity.Warning, "Startup scan completed with warnings.", joined);
             }
         }
         catch (OperationCanceledException)
         {
             StatusMessage = "Startup scan canceled.";
             DiagnosticLogger.LogInfo("Startup refresh canceled", nameof(StartupManagerViewModel));
+            HasEntries = Entries.Count > 0;
         }
         catch (Exception ex)
         {
             StatusMessage = $"Error: {ex.Message}";
             DiagnosticLogger.Log(ex, nameof(StartupManagerViewModel));
+            PublishNotification(NotificationSeverity.Error, "Startup scan failed.", ex.Message);
+            ReplaceIssues(new[] { ex.Message });
         }
         finally
         {
             IsBusy = false;
+            HasEntries = Entries.Count > 0;
         }
     }
 
-    private StartupEntryViewModel CreateEntryViewModel(StartupEntry entry)
+    private async Task<StartupEntryViewModel> CreateEntryViewModelAsync(StartupEntry entry, IList<string> issueSink, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var viewModel = new StartupEntryViewModel(entry);
         viewModel.ToggleRequested += OnEntryToggleRequested;
         viewModel.EnableUserNotifications();
-        viewModel.MarkVerification(null);
+        await InitializeVerificationAsync(viewModel, issueSink, cancellationToken);
         return viewModel;
+    }
+
+    private async Task InitializeVerificationAsync(StartupEntryViewModel viewModel, IList<string> issueSink, CancellationToken cancellationToken)
+    {
+        viewModel.MarkVerification(null);
+
+        if (!viewModel.HasToggleMetadata)
+        {
+            viewModel.UpdateToggleAvailability(false);
+            issueSink.Add($"{viewModel.Name}: Windows did not expose the metadata required to toggle this entry.");
+            return;
+        }
+
+        try
+        {
+            var actualState = await _discoveryService.GetStartupEntryApprovalStateAsync(viewModel.Entry, cancellationToken);
+            if (actualState is bool state)
+            {
+                viewModel.UpdateToggleAvailability(true);
+                viewModel.MarkVerification(state == viewModel.Entry.IsEnabled);
+            }
+            else
+            {
+                viewModel.UpdateToggleAvailability(false);
+                issueSink.Add($"{viewModel.Name}: Windows did not return an approval state (toggle disabled).");
+            }
+        }
+        catch (Exception ex)
+        {
+            viewModel.UpdateToggleAvailability(false);
+            issueSink.Add($"{viewModel.Name}: Unable to verify approval state ({ex.Message}).");
+            DiagnosticLogger.Log(ex, nameof(StartupManagerViewModel));
+        }
     }
 
     private void ResetEntrySubscriptions()
@@ -151,6 +216,7 @@ public sealed class StartupManagerViewModel : ObservableObject
         {
             entry.SetIsEnabledSilently(!desiredState);
             StatusMessage = "This startup entry cannot be toggled.";
+            PublishNotification(NotificationSeverity.Warning, "Startup entry cannot be toggled.");
             return;
         }
 
@@ -163,6 +229,7 @@ public sealed class StartupManagerViewModel : ObservableObject
         {
             entry.SetIsEnabledSilently(!desiredState);
             StatusMessage = "Startup scan in progress. Try again shortly.";
+            PublishNotification(NotificationSeverity.Info, "Startup scan already running. Try again shortly.");
             return;
         }
 
@@ -176,6 +243,7 @@ public sealed class StartupManagerViewModel : ObservableObject
         {
             entry.SetIsEnabledSilently(!desiredState);
             StatusMessage = "Startup change canceled.";
+            PublishNotification(NotificationSeverity.Info, "Startup change canceled.");
             return;
         }
 
@@ -238,6 +306,7 @@ public sealed class StartupManagerViewModel : ObservableObject
             var detail = ex.InnerException?.Message;
             StatusMessage = string.IsNullOrWhiteSpace(detail) ? ex.Message : $"{ex.Message} {detail}";
             DiagnosticLogger.Log(ex, nameof(StartupManagerViewModel));
+            PublishNotification(NotificationSeverity.Error, $"Unable to update {entry.Name}.", detail ?? ex.Message);
         }
         catch (Exception ex)
         {
@@ -245,11 +314,30 @@ public sealed class StartupManagerViewModel : ObservableObject
             entry.MarkVerification(null);
             StatusMessage = $"Unable to update {entry.Name}: {ex.Message}";
             DiagnosticLogger.Log(ex, nameof(StartupManagerViewModel));
+            PublishNotification(NotificationSeverity.Error, $"Unable to update {entry.Name}.", ex.Message);
         }
         finally
         {
             entry.IsTogglePending = false;
         }
+    }
+
+    private void ClearIssues() => ReplaceIssues(Array.Empty<string>());
+
+    private void ReplaceIssues(IEnumerable<string> issues)
+    {
+        Issues.Clear();
+        foreach (var issue in issues ?? Array.Empty<string>())
+        {
+            if (string.IsNullOrWhiteSpace(issue))
+            {
+                continue;
+            }
+
+            Issues.Add(issue.Trim());
+        }
+
+        HasIssues = Issues.Count > 0;
     }
 
     private void OpenSelectedEntryLocation()
@@ -264,6 +352,7 @@ public sealed class StartupManagerViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(resolved))
         {
             StatusMessage = "Unable to resolve startup entry path.";
+            PublishNotification(NotificationSeverity.Warning, "Unable to resolve startup entry path.");
             return;
         }
 
@@ -294,11 +383,13 @@ public sealed class StartupManagerViewModel : ObservableObject
             }
 
             StatusMessage = "Startup path not found.";
+            PublishNotification(NotificationSeverity.Warning, "Startup entry path not found.");
         }
         catch (Exception ex)
         {
             StatusMessage = $"Unable to open location: {ex.Message}";
             DiagnosticLogger.Log(ex, nameof(StartupManagerViewModel));
+            PublishNotification(NotificationSeverity.Error, "Unable to open startup entry location.", ex.Message);
         }
     }
 
@@ -356,5 +447,10 @@ public sealed class StartupManagerViewModel : ObservableObject
         var action = desiredState ? "enable" : "disable";
         var message = $"Do you want to {action} startup entry '{entry.Name}'?";
         return _confirmationService.ConfirmAsync("Confirm Startup Change", message);
+    }
+
+    private void PublishNotification(NotificationSeverity severity, string message, string? detail = null)
+    {
+        _notificationService.Publish(message, severity, detail, nameof(StartupManagerViewModel));
     }
 }

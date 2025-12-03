@@ -47,42 +47,61 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="16"
-                Padding="8">
-            <DataGrid ItemsSource="{Binding StartupManager.Entries}"
-                      SelectedItem="{Binding StartupManager.SelectedEntry, Mode=TwoWay}"
-                      AutoGenerateColumns="False"
-                      CanUserAddRows="False"
-                      CanUserDeleteRows="False"
-                      HeadersVisibility="Column"
-                      RowHeight="32"
-                      Background="{DynamicResource CardBrush}"
-                      BorderThickness="0"
-                      RowBackground="{DynamicResource SurfaceAltBrush}"
-                      AlternatingRowBackground="Transparent"
-                      GridLinesVisibility="None">
+                Padding="12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0"
+                        Margin="0,0,0,12"
+                        Padding="12"
+                        CornerRadius="10"
+                        Background="#1FFF8C42"
+                        BorderBrush="#33FF8C42"
+                        BorderThickness="1"
+                        Visibility="{Binding StartupManager.HasIssues, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock Text="Windows reported startup access issues"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <ItemsControl ItemsSource="{Binding StartupManager.Issues}"
+                                      Margin="0,8,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="0,2,0,2">
+                                        <Ellipse Width="6"
+                                                 Height="6"
+                                                 Fill="{DynamicResource AccentBrush}"
+                                                 Margin="0,6,8,0" />
+                                        <TextBlock Text="{Binding}"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Grid Grid.Row="1">
+                    <DataGrid ItemsSource="{Binding StartupManager.Entries}"
+                              SelectedItem="{Binding StartupManager.SelectedEntry, Mode=TwoWay}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              HeadersVisibility="Column"
+                              RowHeight="32"
+                              Background="{DynamicResource CardBrush}"
+                              BorderThickness="0"
+                              RowBackground="{DynamicResource SurfaceAltBrush}"
+                              AlternatingRowBackground="Transparent"
+                              GridLinesVisibility="None">
                 <DataGrid.Columns>
-                    <DataGridTemplateColumn Width="40">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-                                          HorizontalAlignment="Center"
-                                          VerticalAlignment="Center"
-                                          IsEnabled="{Binding SupportsToggle}">
-                                    <CheckBox.Style>
-                                        <Style TargetType="CheckBox">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsTogglePending}" Value="True">
-                                                    <Setter Property="IsEnabled" Value="False" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </CheckBox.Style>
-                                </CheckBox>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
                     <DataGridTextColumn Binding="{Binding Name}" Header="App Name" Width="220" />
-                    <DataGridTextColumn Binding="{Binding Location}" Header="Publisher" Width="200" />
+                    <DataGridTextColumn Binding="{Binding Scope}" Header="Scope" Width="180" />
                     <DataGridTemplateColumn Header="Status" Width="140">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
@@ -94,10 +113,24 @@
                                               IsEnabled="{Binding SupportsToggle}">
                                     <ToggleButton.Style>
                                         <Style TargetType="ToggleButton">
+                                            <Setter Property="Opacity" Value="1" />
+                                            <Setter Property="ToolTip" Value="Toggle startup state" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsTogglePending}" Value="True">
                                                     <Setter Property="IsEnabled" Value="False" />
+                                                    <Setter Property="ToolTip" Value="Applying change..." />
                                                 </DataTrigger>
+                                                <DataTrigger Binding="{Binding SupportsToggle}" Value="False">
+                                                    <Setter Property="Opacity" Value="0.4" />
+                                                    <Setter Property="ToolTip" Value="Windows did not expose a toggle for this entry." />
+                                                </DataTrigger>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding SupportsToggle}" Value="True" />
+                                                        <Condition Binding="{Binding RequiresElevation}" Value="True" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="ToolTip" Value="Administrator permission may be required to edit this entry." />
+                                                </MultiDataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </ToggleButton.Style>
@@ -176,6 +209,54 @@
                     <DataGridTextColumn Binding="{Binding Command}" Header="Command" Width="*" />
                 </DataGrid.Columns>
             </DataGrid>
+                    <Border Background="#CC0F1119"
+                            CornerRadius="12"
+                            Visibility="{Binding StartupManager.IsBusy, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <StackPanel VerticalAlignment="Center"
+                                    HorizontalAlignment="Center"
+                                    Width="240">
+                            <ProgressBar IsIndeterminate="True"
+                                         Height="6"
+                                         Margin="0,0,0,12" />
+                            <TextBlock Text="Scanning startup entries..."
+                                       HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                        </StackPanel>
+                    </Border>
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                MaxWidth="360">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding StartupManager.IsBusy}" Value="False" />
+                                            <Condition Binding="{Binding StartupManager.HasEntries}" Value="False" />
+                                            <Condition Binding="{Binding StartupManager.HasIssues}" Value="False" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <Image Width="64"
+                               Height="64"
+                               Source="https://img.icons8.com/fluency/96/sleeping-in-bed.png"
+                               Margin="0,0,0,12" />
+                        <TextBlock Text="No startup entries are available to manage."
+                                   TextAlignment="Center"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <TextBlock Text="Try running System Cleaner as administrator or installing new apps that register startup commands."
+                                   Margin="0,8,0,0"
+                                   TextAlignment="Center"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

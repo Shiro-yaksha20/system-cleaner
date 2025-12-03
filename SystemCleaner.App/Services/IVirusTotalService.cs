@@ -10,7 +10,11 @@ public interface IVirusTotalService : IDisposable
 
     event EventHandler<VirusTotalQuotaInfo>? QuotaUpdated;
 
+    event EventHandler<bool>? RateLimitStateChanged;
+
     bool HasApiKey { get; }
+
+    bool IsWaitingForQuota { get; }
 
     VirusTotalQuotaInfo LatestQuota { get; }
 

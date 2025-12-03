@@ -12,6 +12,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
 using SystemCleaner.App.Services;
+using SystemCleaner.App.Utilities;
 using SystemCleaner.Core.Uninstall;
 
 namespace SystemCleaner.App.ViewModels;
@@ -22,6 +23,7 @@ public sealed class UninstallerViewModel : ObservableObject
 
     private readonly IUninstallerService _service;
     private readonly IUserConfirmationService _confirmationService;
+    private readonly INotificationService _notificationService;
     private readonly RelayCommand _refreshCommand;
     private readonly RelayCommand _uninstallCommand;
     private readonly RelayCommand _forceUninstallCommand;
@@ -49,11 +51,15 @@ public sealed class UninstallerViewModel : ObservableObject
     private string _installMonitorStatus = "Install monitor idle.";
     private string _residualStatus = "Powerful scan not run.";
     private bool _showWindowsAppsOnly;
+    private bool _hasScannedResiduals;
+    private bool _isSelectAllChecked;
+    private bool _isApplyingSelectAll;
 
-    public UninstallerViewModel(IUninstallerService service, IUserConfirmationService? confirmationService = null)
+    public UninstallerViewModel(IUninstallerService service, IUserConfirmationService? confirmationService = null, INotificationService? notificationService = null)
     {
         _service = service ?? throw new ArgumentNullException(nameof(service));
         _confirmationService = confirmationService ?? new UserConfirmationService { RequireConfirmation = false };
+        _notificationService = notificationService ?? new NotificationService();
         _dispatcher = Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
         Applications = new ObservableCollection<InstalledApplicationViewModel>();
         BrowserExtensions = new ObservableCollection<BrowserExtensionViewModel>();
@@ -152,6 +158,8 @@ public sealed class UninstallerViewModel : ObservableObject
 
     public bool HasSelection => SelectedCount > 0;
 
+    public bool HasApplications => Applications.Count > 0;
+
     public string InstallMonitorStatus
     {
         get => _installMonitorStatus;
@@ -169,6 +177,20 @@ public sealed class UninstallerViewModel : ObservableObject
     }
 
     public bool HasResiduals => ResidualItems.Count > 0;
+
+    public bool HasScannedResiduals => _hasScannedResiduals;
+
+    public bool IsSelectAllChecked
+    {
+        get => _isSelectAllChecked;
+        set => ApplySelectAll(value);
+    }
+
+    public long SelectedSizeBytes => Applications
+        .Where(app => app.IsSelected && app.Application.EstimatedSizeBytes.HasValue)
+        .Sum(app => app.Application.EstimatedSizeBytes!.Value);
+
+    public string SelectedSizeDisplay => SizeFormatter.FormatSize(SelectedSizeBytes);
 
     public bool ShowWindowsAppsOnly
     {
@@ -200,6 +222,7 @@ public sealed class UninstallerViewModel : ObservableObject
             _lastResidualTargets = Array.Empty<InstalledApplication>();
             UpdateResiduals(Array.Empty<ResidualItem>());
             UpdateResidualStatus("Powerful scan not run.");
+            SetResidualScanState(false);
 
             if (snapshot.Issues.Count > 0)
             {
@@ -213,7 +236,7 @@ public sealed class UninstallerViewModel : ObservableObject
 
             if (snapshot.Applications.Count == 0)
             {
-                UpdateStatus("No applications detected. Check log for registry access issues.");
+                UpdateStatus("No applications detected. Check log for registry access issues.", NotificationSeverity.Warning);
             }
 
             UpdateStatus($"Loaded {snapshot.Applications.Count} applications.");
@@ -254,7 +277,7 @@ public sealed class UninstallerViewModel : ObservableObject
             }
             else
             {
-                UpdateStatus($"Completed with {result.Failed} issue(s).");
+                UpdateStatus($"Completed with {result.Failed} issue(s).", NotificationSeverity.Warning);
             }
 
             var snapshot = await _service.GetInstalledSoftwareAsync(token);
@@ -264,6 +287,7 @@ public sealed class UninstallerViewModel : ObservableObject
 
             var residuals = await CollectResidualsAsync(selected, token);
             UpdateResiduals(residuals);
+            SetResidualScanState(true);
             UpdateResidualStatus(residuals.Count == 0 ? "No residuals detected." : $"Powerful scan found {residuals.Count} residual item(s).");
         }, CancellationToken.None);
     }
@@ -282,6 +306,7 @@ public sealed class UninstallerViewModel : ObservableObject
             UpdateResidualStatus("Running powerful scan...");
             var residuals = await CollectResidualsAsync(selectedApps, token).ConfigureAwait(false);
             UpdateResiduals(residuals);
+            SetResidualScanState(true);
             UpdateResidualStatus(residuals.Count == 0
                 ? "No residuals detected."
                 : $"Powerful scan found {residuals.Count} residual item(s).");
@@ -342,6 +367,7 @@ public sealed class UninstallerViewModel : ObservableObject
 
             var residuals = await CollectResidualsAsync(_lastResidualTargets, token).ConfigureAwait(false);
             UpdateResiduals(residuals);
+            SetResidualScanState(true);
 
             var summary = result.Failed == 0
                 ? $"Removed {result.Removed} residual item(s)."
@@ -384,7 +410,7 @@ public sealed class UninstallerViewModel : ObservableObject
             }
             else
             {
-                UpdateStatus("Unable to remove extension.");
+                UpdateStatus("Unable to remove extension.", NotificationSeverity.Warning);
             }
         }, CancellationToken.None);
     }
@@ -400,7 +426,7 @@ public sealed class UninstallerViewModel : ObservableObject
         var path = app.InstallLocation;
         if (string.IsNullOrWhiteSpace(path))
         {
-            UpdateStatus("Install location not available.");
+            UpdateStatus("Install location not available.", NotificationSeverity.Warning);
             return;
         }
 
@@ -413,11 +439,11 @@ public sealed class UninstallerViewModel : ObservableObject
                 return;
             }
 
-            UpdateStatus("Install directory not found.");
+            UpdateStatus("Install directory not found.", NotificationSeverity.Warning);
         }
         catch (Exception ex)
         {
-            UpdateStatus(ex.Message);
+            UpdateStatus(ex.Message, NotificationSeverity.Error, ex.Message);
             DiagnosticLogger.Log(ex, nameof(UninstallerViewModel));
         }
     }
@@ -433,7 +459,7 @@ public sealed class UninstallerViewModel : ObservableObject
         var keyPath = app.RegistryKeyPath;
         if (string.IsNullOrWhiteSpace(keyPath))
         {
-            UpdateStatus("Registry key unavailable.");
+            UpdateStatus("Registry key unavailable.", NotificationSeverity.Warning);
             return;
         }
 
@@ -449,7 +475,7 @@ public sealed class UninstallerViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            UpdateStatus(ex.Message);
+            UpdateStatus(ex.Message, NotificationSeverity.Error, ex.Message);
             DiagnosticLogger.Log(ex, nameof(UninstallerViewModel));
         }
     }
@@ -546,7 +572,7 @@ public sealed class UninstallerViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            UpdateStatus(ex.Message);
+            UpdateStatus(ex.Message, NotificationSeverity.Error, ex.Message);
             DiagnosticLogger.Log(ex, nameof(UninstallerViewModel));
         }
         finally
@@ -558,6 +584,9 @@ public sealed class UninstallerViewModel : ObservableObject
                 RaiseCommandStates();
                 RaisePropertyChanged(nameof(SelectedCount));
                 RaisePropertyChanged(nameof(HasSelection));
+                RaisePropertyChanged(nameof(SelectedSizeBytes));
+                RaisePropertyChanged(nameof(SelectedSizeDisplay));
+                RefreshSelectAllState();
             });
         }
     }
@@ -582,8 +611,12 @@ public sealed class UninstallerViewModel : ObservableObject
 
             RaisePropertyChanged(nameof(SelectedCount));
             RaisePropertyChanged(nameof(HasSelection));
+            RaisePropertyChanged(nameof(HasApplications));
             RaiseCommandStates();
             SelectedApplication = Applications.FirstOrDefault();
+            RefreshSelectAllState();
+            RaisePropertyChanged(nameof(SelectedSizeBytes));
+            RaisePropertyChanged(nameof(SelectedSizeDisplay));
         });
 
         RefreshKnownApplications(applications);
@@ -666,6 +699,9 @@ public sealed class UninstallerViewModel : ObservableObject
         {
             RaisePropertyChanged(nameof(SelectedCount));
             RaisePropertyChanged(nameof(HasSelection));
+            RaisePropertyChanged(nameof(SelectedSizeBytes));
+            RaisePropertyChanged(nameof(SelectedSizeDisplay));
+            RefreshSelectAllState();
             RaiseCommandStates();
         }
     }
@@ -799,9 +835,18 @@ public sealed class UninstallerViewModel : ObservableObject
         });
     }
 
-    private void UpdateStatus(string message)
+    private void PublishNotification(NotificationSeverity severity, string message, string? detail = null)
+    {
+        _notificationService.Publish(message, severity, detail, nameof(UninstallerViewModel));
+    }
+
+    private void UpdateStatus(string message, NotificationSeverity? severity = null, string? detail = null)
     {
         InvokeOnUi(() => SetProperty(ref _statusMessage, message));
+        if (severity.HasValue)
+        {
+            PublishNotification(severity.Value, message, detail);
+        }
     }
 
     private void SetSearchText(string value)
@@ -845,6 +890,53 @@ public sealed class UninstallerViewModel : ObservableObject
     private void UpdateResidualStatus(string message)
     {
         InvokeOnUi(() => SetProperty(ref _residualStatus, message));
+    }
+
+    private void SetResidualScanState(bool hasScanned)
+    {
+        InvokeOnUi(() => SetProperty(ref _hasScannedResiduals, hasScanned, nameof(HasScannedResiduals)));
+    }
+
+    private void ApplySelectAll(bool isChecked)
+    {
+        InvokeOnUi(() =>
+        {
+            if (_isApplyingSelectAll)
+            {
+                return;
+            }
+
+            SetProperty(ref _isSelectAllChecked, isChecked, nameof(IsSelectAllChecked));
+
+            _isApplyingSelectAll = true;
+            try
+            {
+                foreach (var app in Applications)
+                {
+                    app.IsSelected = isChecked;
+                }
+            }
+            finally
+            {
+                _isApplyingSelectAll = false;
+            }
+
+            RaisePropertyChanged(nameof(SelectedCount));
+            RaisePropertyChanged(nameof(HasSelection));
+            RaisePropertyChanged(nameof(SelectedSizeBytes));
+            RaisePropertyChanged(nameof(SelectedSizeDisplay));
+        });
+    }
+
+    private void RefreshSelectAllState()
+    {
+        if (_isApplyingSelectAll)
+        {
+            return;
+        }
+
+        var next = Applications.Count > 0 && Applications.All(app => app.IsSelected);
+        InvokeOnUi(() => SetProperty(ref _isSelectAllChecked, next, nameof(IsSelectAllChecked)));
     }
 
     private void OnResidualItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

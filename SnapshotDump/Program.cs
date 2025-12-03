@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,6 +62,10 @@ internal sealed class Program
 
 	private static async Task DumpAsync()
 	{
+		// Dump hardware sensors first
+		var hwDumpPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "sensor_dump.txt");
+		SnapshotDump.HardwareDiag.DumpAllSensors(hwDumpPath);
+
 		var service = new UninstallerService();
 		Console.WriteLine("Collecting snapshot...");
 		var snapshot = await service.GetInstalledSoftwareAsync().ConfigureAwait(true);
@@ -70,7 +75,8 @@ internal sealed class Program
 		Console.WriteLine("Creating view model...");
 
 		var confirmationService = new UserConfirmationService { RequireConfirmation = false };
-		var vm = new UninstallerViewModel(service, confirmationService);
+		var notificationService = new NotificationService();
+		var vm = new UninstallerViewModel(service, confirmationService, notificationService);
 		Console.WriteLine("View model created.");
 		await vm.InitializeAsync().ConfigureAwait(true);
 		Console.WriteLine($"ViewModel applications: {vm.Applications.Count}");

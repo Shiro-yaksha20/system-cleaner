@@ -17,6 +17,8 @@
             </Style>
 
             <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+            <converters:CollectionEmptyToVisibilityConverter x:Key="CollectionEmptyToVisibilityConverter" />
+            <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
             <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <converters:UsagePercentToArcGeometryConverter x:Key="UsagePercentToArcConverter" />
             <converters:PercentToActualWidthConverter x:Key="PercentToActualWidthConverter" />
@@ -44,6 +46,57 @@
                 </Setter>
             </Style>
 
+            <Style x:Key="ToolbarButtonStyle" TargetType="Button">
+                <Setter Property="Width" Value="120" />
+                <Setter Property="Height" Value="30" />
+                <Setter Property="Margin" Value="0,0,12,0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Background" Value="{DynamicResource CardBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                <Setter Property="FontFamily" Value="Segoe UI" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="4">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="ToolbarAccentButtonStyle"
+                   BasedOn="{StaticResource ToolbarButtonStyle}"
+                   TargetType="Button">
+                <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                <Setter Property="Foreground" Value="White" />
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource AccentHoverBrush}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="SmallToolbarButtonStyle"
+                   BasedOn="{StaticResource ToolbarButtonStyle}"
+                   TargetType="Button">
+                <Setter Property="Width" Value="110" />
+                <Setter Property="Height" Value="28" />
+            </Style>
+
             <Style TargetType="ListBox">
                 <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
@@ -58,6 +111,29 @@
                 <Setter Property="GridLinesVisibility" Value="None" />
                 <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
+            </Style>
+
+            <Style x:Key="ModuleListItemStyle" TargetType="ListBoxItem">
+                <Setter Property="Height" Value="36" />
+                <Setter Property="Padding" Value="8,0" />
+                <Setter Property="FontFamily" Value="Segoe UI" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                    </Trigger>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                    </Trigger>
+                </Style.Triggers>
             </Style>
         </ResourceDictionary>
     </Application.Resources>

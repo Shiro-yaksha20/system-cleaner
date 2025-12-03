@@ -1,9 +1,11 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using SystemCleaner.App.ViewModels;
+using SystemCleaner.App.Services;
 
 namespace SystemCleaner.App;
 
@@ -16,14 +18,32 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        StateChanged += OnWindowStateChanged;
+        ApplyWindowStateLayout();
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        if (DataContext is MainViewModel viewModel)
+        if (DataContext is not MainViewModel viewModel)
         {
-            await viewModel.InitializeAsync();
+            return;
         }
+
+        try
+        {
+            await viewModel.InitializeAsync().ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogger.Log(ex, nameof(MainWindow));
+            MessageBox.Show(this,
+                "System Cleaner failed to initialize. Please check the logs for more details.",
+                "Initialization Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+
+        ApplyWindowStateLayout();
     }
 
     private void TitleBar_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -81,5 +101,31 @@ public partial class MainWindow : Window
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    private void OnWindowStateChanged(object? sender, EventArgs e)
+    {
+        ApplyWindowStateLayout();
+    }
+
+    private void ApplyWindowStateLayout()
+    {
+        if (ShellBorder is null)
+        {
+            return;
+        }
+
+        if (WindowState == WindowState.Maximized)
+        {
+            ShellBorder.Margin = new Thickness(0);
+            ShellBorder.Padding = new Thickness(6);
+            ShellBorder.CornerRadius = new CornerRadius(0);
+        }
+        else
+        {
+            ShellBorder.Margin = new Thickness(12);
+            ShellBorder.Padding = new Thickness(12);
+            ShellBorder.CornerRadius = new CornerRadius(12);
+        }
     }
 }

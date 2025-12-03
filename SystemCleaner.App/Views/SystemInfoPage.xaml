@@ -98,25 +98,117 @@
                         Padding="24"
                         Margin="0,0,8,0">
                     <StackPanel>
-                        <TextBlock Text="CPU"
+                        <TextBlock Text="Processor"
                                    FontSize="15"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource PrimaryTextBrush}" />
-                        <UniformGrid Columns="2"
-                                     Margin="0,16,0,0"
+                        <TextBlock Text="{Binding SystemInfo.CpuDetails.Name}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   Margin="0,4,0,12" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Manufacturer"
+                                       Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding SystemInfo.CpuDetails.Manufacturer}"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                            <TextBlock Grid.Row="1"
+                                       Text="Cores"
+                                       Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Grid.Row="1"
+                                       Grid.Column="1"
+                                       Text="{Binding SystemInfo.CpuDetails.Cores}"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                            <TextBlock Grid.Row="2"
+                                       Text="Threads"
+                                       Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Grid.Row="2"
+                                       Grid.Column="1"
+                                       Text="{Binding SystemInfo.CpuDetails.Threads}"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                            <TextBlock Grid.Row="3"
+                                       Text="Base Clock"
+                                       Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Grid.Row="3"
+                                       Grid.Column="1"
+                                       Text="{Binding SystemInfo.CpuDetails.BaseClock}"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                            <TextBlock Grid.Row="4"
+                                       Text="Architecture"
+                                       Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Grid.Row="4"
+                                       Grid.Column="1"
+                                       Text="{Binding SystemInfo.CpuDetails.Architecture}"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                            <TextBlock Grid.Row="5"
+                                       Text="Socket"
+                                       Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Grid.Row="5"
+                                       Grid.Column="1"
+                                       Text="{Binding SystemInfo.CpuDetails.Socket}"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                            <TextBlock Grid.Row="6"
+                                       Text="L2 Cache"
+                                       Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Grid.Row="6"
+                                       Grid.Column="1"
+                                       Text="{Binding SystemInfo.CpuDetails.L2Cache}"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                            <TextBlock Grid.Row="7"
+                                       Text="L3 Cache"
+                                       Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Grid.Row="7"
+                                       Grid.Column="1"
+                                       Text="{Binding SystemInfo.CpuDetails.L3Cache}"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                        </Grid>
+                        <Separator Margin="0,16,0,12"
+                                   Background="{DynamicResource BorderBrush}" />
+                        <UniformGrid Columns="3"
+                                     Rows="1"
                                      HorizontalAlignment="Stretch">
-                            <TextBlock Text="Usage"
-                                       Foreground="{DynamicResource SecondaryTextBrush}" />
-                            <TextBlock Text="{Binding SystemInfo.CpuUsage}"
-                                       Foreground="{DynamicResource PrimaryTextBrush}" />
-                            <TextBlock Text="Temperature"
-                                       Foreground="{DynamicResource SecondaryTextBrush}" />
-                            <TextBlock Text="{Binding SystemInfo.CpuTemperature}"
-                                       Foreground="{DynamicResource PrimaryTextBrush}" />
-                            <TextBlock Text="Clock"
-                                       Foreground="{DynamicResource SecondaryTextBrush}" />
-                            <TextBlock Text="{Binding SystemInfo.CpuClock}"
-                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                            <StackPanel>
+                                <TextBlock Text="Current Usage"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                <TextBlock Text="{Binding SystemInfo.CpuUsage}"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Temperature"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                <TextBlock Text="{Binding SystemInfo.CpuTemperature}"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Clock"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                <TextBlock Text="{Binding SystemInfo.CpuClock}"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                            </StackPanel>
                         </UniformGrid>
                     </StackPanel>
                 </Border>
@@ -129,29 +221,207 @@
                         Padding="24"
                         Margin="8,0,0,0">
                     <StackPanel>
-                        <TextBlock Text="GPU"
+                        <TextBlock Text="Graphics"
                                    FontSize="15"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource PrimaryTextBrush}" />
-                        <UniformGrid Columns="2"
-                                     Margin="0,16,0,0"
-                                     HorizontalAlignment="Stretch">
-                            <TextBlock Text="Usage"
-                                       Foreground="{DynamicResource SecondaryTextBrush}" />
-                            <TextBlock Text="{Binding SystemInfo.GpuUsage}"
-                                       Foreground="{DynamicResource PrimaryTextBrush}" />
-                            <TextBlock Text="Temperature"
-                                       Foreground="{DynamicResource SecondaryTextBrush}" />
-                            <TextBlock Text="{Binding SystemInfo.GpuTemperature}"
-                                       Foreground="{DynamicResource PrimaryTextBrush}" />
-                            <TextBlock Text="Clock"
-                                       Foreground="{DynamicResource SecondaryTextBrush}" />
-                            <TextBlock Text="{Binding SystemInfo.GpuClock}"
-                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <ItemsControl ItemsSource="{Binding SystemInfo.GraphicsAdapters}"
+                                      Margin="0,16,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,12"
+                                            Padding="12"
+                                            CornerRadius="12"
+                                            Background="{DynamicResource SurfaceAltBrush}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                                            <Grid Margin="0,8,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+                                                <TextBlock Text="Memory"
+                                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Memory}"
+                                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                                                <TextBlock Grid.Row="1"
+                                                           Text="Driver"
+                                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                                <TextBlock Grid.Row="1"
+                                                           Grid.Column="1"
+                                                           Text="{Binding DriverVersion}"
+                                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                                                <TextBlock Grid.Row="2"
+                                                           Text="Driver Date"
+                                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                                <TextBlock Grid.Row="2"
+                                                           Grid.Column="1"
+                                                           Text="{Binding DriverDate}"
+                                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                                                <TextBlock Grid.Row="3"
+                                                           Text="Resolution"
+                                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                                <TextBlock Grid.Row="3"
+                                                           Grid.Column="1"
+                                                           Text="{Binding Resolution}"
+                                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                                                <TextBlock Grid.Row="4"
+                                                           Text="Refresh"
+                                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                                <TextBlock Grid.Row="4"
+                                                           Grid.Column="1"
+                                                           Text="{Binding RefreshRate}"
+                                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                                                <TextBlock Grid.Row="5"
+                                                           Text="Video Mode"
+                                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                                <TextBlock Grid.Row="5"
+                                                           Grid.Column="1"
+                                                           Text="{Binding VideoMode}"
+                                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                            <ItemsControl.Template>
+                                <ControlTemplate TargetType="ItemsControl">
+                                    <StackPanel>
+                                        <ItemsPresenter />
+                                        <TextBlock Text="No graphics adapters reported."
+                                                   Margin="0,8,0,0"
+                                                   HorizontalAlignment="Center"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SystemInfo.GraphicsAdapters.Count}"
+                                                                     Value="0">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </ControlTemplate>
+                            </ItemsControl.Template>
+                        </ItemsControl>
+                        <Separator Margin="0,12,0,12"
+                                   Background="{DynamicResource BorderBrush}" />
+                        <UniformGrid Columns="3"
+                                     Rows="1">
+                            <StackPanel>
+                                <TextBlock Text="Current Usage"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                <TextBlock Text="{Binding SystemInfo.GpuUsage}"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Temperature"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                <TextBlock Text="{Binding SystemInfo.GpuTemperature}"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Clock"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                                <TextBlock Text="{Binding SystemInfo.GpuClock}"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                            </StackPanel>
                         </UniformGrid>
                     </StackPanel>
                 </Border>
             </Grid>
+
+            <Border Background="{DynamicResource SurfaceAltBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="16"
+                    Padding="24"
+                    Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Windows Details"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryTextBrush}" />
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Edition"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding SystemInfo.WindowsDetails.Edition}"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <TextBlock Grid.Row="1"
+                                   Text="Version"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="1"
+                                   Text="{Binding SystemInfo.WindowsDetails.Version}"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <TextBlock Grid.Row="2"
+                                   Text="Build"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Grid.Row="2"
+                                   Grid.Column="1"
+                                   Text="{Binding SystemInfo.WindowsDetails.Build}"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <TextBlock Grid.Row="3"
+                                   Text="Install Date"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Grid.Row="3"
+                                   Grid.Column="1"
+                                   Text="{Binding SystemInfo.WindowsDetails.InstallDate}"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <TextBlock Grid.Row="4"
+                                   Text="Registered Owner"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Grid.Row="4"
+                                   Grid.Column="1"
+                                   Text="{Binding SystemInfo.WindowsDetails.RegisteredOwner}"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <TextBlock Grid.Row="5"
+                                   Text="Product ID"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Grid.Row="5"
+                                   Grid.Column="1"
+                                   Text="{Binding SystemInfo.WindowsDetails.ProductId}"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
 
             <Border Background="{DynamicResource SurfaceAltBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"

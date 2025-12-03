@@ -1,0 +1,11 @@
+﻿Collecting snapshot...
+Service returned: 96
+Empty names: 0
+Empty publishers: 1
+Creating view model...
+View model created.
+ViewModel applications: 96
+Filtered view count: 96
+Current status: Loaded 96 applications.
+ShowWindowsAppsOnly: False
+Search text: ''

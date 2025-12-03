@@ -62,6 +62,7 @@ public partial class App : Application
         services.AddSingleton<IUninstallerService, UninstallerService>();
         services.AddSingleton<IHardwareMonitorService, HardwareMonitorService>();
         services.AddSingleton<IUserConfirmationService, UserConfirmationService>();
+        services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IAppSettingsService, AppSettingsService>();
         services.AddSingleton<IVirusTotalService, VirusTotalService>();
         services.AddSingleton<MainViewModel>();

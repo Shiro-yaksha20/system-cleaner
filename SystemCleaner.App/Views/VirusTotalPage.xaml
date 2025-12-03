@@ -409,19 +409,47 @@
                 Visibility="{Binding HasQuotaInfo, Converter={StaticResource BoolToVisibilityConverter}}"
                 ToolTipService.InitialShowDelay="120"
                 ToolTipService.ShowDuration="60000">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Quota"
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource PrimaryTextBrush}" />
-                <TextBlock Text=":"
-                           Margin="6,0,0,0"
-                           Foreground="{DynamicResource SecondaryTextBrush}" />
-                <TextBlock Text="{Binding QuotaSummary}"
-                           Margin="4,0,0,0"
-                           Foreground="{DynamicResource SecondaryTextBrush}"
-                           TextTrimming="CharacterEllipsis"
-                           MaxWidth="220" />
-            </StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Quota"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryTextBrush}" />
+                    <TextBlock Text=":"
+                               Margin="6,0,0,0"
+                               Foreground="{DynamicResource SecondaryTextBrush}" />
+                    <TextBlock Text="{Binding QuotaSummary}"
+                               Margin="4,0,0,0"
+                               Foreground="{DynamicResource SecondaryTextBrush}"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="220" />
+                    <ProgressBar Width="60"
+                                 Height="6"
+                                 Margin="12,0,0,0"
+                                 IsIndeterminate="True"
+                                 Visibility="{Binding IsQuotaRefreshing, Converter={StaticResource BoolToVisibilityConverter}}"
+                                 Foreground="{DynamicResource AccentBrush}"
+                                 Background="Transparent"
+                                 BorderBrush="Transparent" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Margin="12,0,0,0"
+                        Padding="12,4"
+                        Style="{DynamicResource ToolbarButtonStyle}"
+                        Command="{Binding RefreshQuotaCommand}"
+                        Visibility="{Binding HasApiKey, Converter={StaticResource BoolToVisibilityConverter}}"
+                        ToolTip="Refresh VirusTotal quota usage">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text=""
+                                   FontFamily="Segoe MDL2 Assets"
+                                   Margin="0,0,6,0" />
+                        <TextBlock Text="Refresh" />
+                    </StackPanel>
+                </Button>
+            </Grid>
             <Border.ToolTip>
                 <ToolTip Placement="Top"
                          Padding="12"

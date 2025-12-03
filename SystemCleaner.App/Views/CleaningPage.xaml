@@ -7,54 +7,120 @@
              Background="Transparent">
     <Grid Margin="24,20,24,16">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="224" />
-            <ColumnDefinition Width="12" />
+            <ColumnDefinition Width="240" />
+            <ColumnDefinition Width="16" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-    <Border Grid.Column="0"
-        Background="{DynamicResource CardBrush}"
-        BorderBrush="{DynamicResource BorderBrush}"
-        BorderThickness="1"
-        CornerRadius="16"
-        Padding="16">
+        <Border Grid.Column="0"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="16"
+                Padding="18">
             <StackPanel>
-                <TextBlock Text="Modules"
-                           FontSize="14"
-                           FontWeight="Bold"
-                           Foreground="{DynamicResource PrimaryTextBrush}"
-                           Margin="0,0,0,12" />
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="0,0,0,12">
+                    <TextBlock Text="Modules"
+                               FontSize="14"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource PrimaryTextBrush}" />
+                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                            CornerRadius="10"
+                            Padding="8,2"
+                            Margin="8,0,0,0">
+                        <TextBlock Text="{Binding Modules.Count, StringFormat={}{0} total}"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   FontSize="11" />
+                    </Border>
+                </StackPanel>
                 <ListBox ItemsSource="{Binding Modules}"
                          SelectedItem="{Binding SelectedModule, Mode=TwoWay}"
-                         ItemContainerStyle="{DynamicResource ModuleListItemStyle}"
                          BorderThickness="0"
                          Margin="0,4,0,0"
-                         MaxHeight="320">
+                         ScrollViewer.VerticalScrollBarVisibility="Auto">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource ModuleListItemStyle}">
+                            <Setter Property="ToolTip" Value="{Binding Description}" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="12"
-                                         Height="12"
-                                         Fill="{DynamicResource AccentBrush}"
-                                         VerticalAlignment="Center" />
-                                <TextBlock Text="{Binding Name}"
-                                           Margin="8,0,0,0"
-                                           VerticalAlignment="Center"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource PrimaryTextBrush}" />
-                            </StackPanel>
+                            <Grid Margin="0,2"
+                                  ToolTip="{Binding Description}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border Width="32"
+                                        Height="32"
+                                        CornerRadius="16"
+                                        Background="{DynamicResource SurfaceAltBrush}"
+                                        BorderBrush="Transparent"
+                                        BorderThickness="1"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                    <TextBlock FontFamily="Segoe MDL2 Assets"
+                                               FontSize="14"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="" />
+                                                <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsQuickCleanSafe}" Value="False">
+                                                        <Setter Property="Text" Value="" />
+                                                        <Setter Property="Foreground" Value="#FFFFB35E" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                                <StackPanel Grid.Column="1"
+                                            Margin="12,0,8,0">
+                                    <TextBlock Text="{Binding Name}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource PrimaryTextBrush}" />
+                                    <TextBlock Text="{Binding Description}"
+                                               Foreground="{DynamicResource SecondaryTextBrush}"
+                                               FontSize="11"
+                                               Opacity="0.8"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center">
+                                    <Border Background="{DynamicResource AccentSoftBrush}"
+                                            CornerRadius="10"
+                                            Padding="8,2"
+                                            HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding Items.Count}"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource AccentBrush}" />
+                                    </Border>
+                                    <TextBlock Text="{Binding TotalSizeDisplay}"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource SecondaryTextBrush}"
+                                               HorizontalAlignment="Right"
+                                               Margin="0,4,0,0" />
+                                </StackPanel>
+                            </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
             </StackPanel>
         </Border>
 
-    <Border Grid.Column="2"
-        Background="{DynamicResource CardBrush}"
-        BorderBrush="{DynamicResource BorderBrush}"
-        BorderThickness="1"
-        CornerRadius="16"
-        Padding="20">
+        <Border Grid.Column="2"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="16"
+                Padding="24">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -65,11 +131,11 @@
 
                 <StackPanel Orientation="Vertical"
                             Margin="0,0,0,16">
-                    <TextBlock Text="{Binding SelectedModule.Name}"
+                    <TextBlock Text="{Binding SelectedModule.Name, TargetNullValue=Select a module}"
                                FontSize="18"
                                FontWeight="Bold"
                                Foreground="{DynamicResource PrimaryTextBrush}" />
-                    <TextBlock Text="{Binding SelectedModule.Items.Count, StringFormat={}{0} items}"
+                    <TextBlock Text="{Binding SelectedModule.Items.Count, StringFormat={}{0} items, TargetNullValue=0 items}"
                                FontSize="12"
                                Foreground="{DynamicResource SecondaryTextBrush}"
                                Margin="0,4,0,0" />
@@ -78,73 +144,332 @@
                                Foreground="{DynamicResource SecondaryTextBrush}"
                                TextWrapping="Wrap"
                                Margin="0,8,0,0" />
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,12,0,0">
+                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="10,4"
+                                Margin="0,0,8,0">
+                            <TextBlock Text="{Binding SelectedModule.TotalSizeDisplay, StringFormat=Total: {0}, TargetNullValue=Total: --}"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                        </Border>
+                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="10,4"
+                                Margin="0,0,8,0">
+                            <TextBlock Text="{Binding SelectedModule.SelectedSizeDisplay, StringFormat=Selected: {0}, TargetNullValue=Selected: --}"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                        </Border>
+                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="10,4">
+                            <TextBlock FontSize="11"
+                                       Foreground="{DynamicResource PrimaryTextBrush}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Quick Clean Safe" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedModule.IsQuickCleanSafe}" Value="False">
+                                                <Setter Property="Text" Value="Manual Clean Only" />
+                                                <Setter Property="Foreground" Value="#FFFFB35E" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
+                    <Border Background="#26E8A400"
+                            BorderBrush="#44E8A400"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="10,6"
+                            Margin="0,12,0,0">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedModule}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding SelectedModule.Warning}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding SelectedModule.Warning}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚠"
+                                       FontSize="14"
+                                       Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding SelectedModule.Warning}"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
 
                 <StackPanel Grid.Row="1"
                             Orientation="Horizontal"
+                            VerticalAlignment="Center"
                             Margin="0,0,0,16">
-                    <Button Content="Select All"
+                    <StackPanel Orientation="Horizontal">
+                        <Button Style="{DynamicResource SmallToolbarButtonStyle}"
+                                Command="{Binding SelectAllCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text=""
+                                           FontFamily="Segoe MDL2 Assets"
+                                           Margin="0,0,6,0" />
+                                <TextBlock Text="Select All" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{DynamicResource SmallToolbarButtonStyle}"
+                                Margin="8,0,0,0"
+                                Command="{Binding DeselectAllCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text=""
+                                           FontFamily="Segoe MDL2 Assets"
+                                           Margin="0,0,6,0" />
+                                <TextBlock Text="Clear" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    <Rectangle Width="1"
+                               Height="24"
+                               Fill="{DynamicResource BorderBrush}"
+                               Margin="12,0" />
+                    <Button Style="{DynamicResource SmallToolbarButtonStyle}"
+                            Command="{Binding OpenItemLocationCommand}"
+                            ToolTip="Open the selected file location">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text=""
+                                       FontFamily="Segoe MDL2 Assets"
+                                       Margin="0,0,6,0" />
+                            <TextBlock Text="Open Location" />
+                        </StackPanel>
+                    </Button>
+                    <Rectangle Width="1"
+                               Height="24"
+                               Fill="{DynamicResource BorderBrush}"
+                               Margin="12,0" />
+                    <Button x:Name="MoreActionsButton"
                             Style="{DynamicResource SmallToolbarButtonStyle}"
-                            Command="{Binding SelectAllCommand}" />
-                    <Button Content="Clear Selection"
-                            Style="{DynamicResource SmallToolbarButtonStyle}"
-                            Command="{Binding DeselectAllCommand}" />
-                    <Button Content="Open Location"
-                            Style="{DynamicResource SmallToolbarButtonStyle}"
-                            Margin="0"
-                            Command="{Binding OpenItemLocationCommand}" />
+                            Click="MoreActionsButton_Click"
+                            ToolTip="Additional cleanup actions">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text=""
+                                       FontFamily="Segoe MDL2 Assets"
+                                       Margin="0,0,6,0" />
+                            <TextBlock Text="More" />
+                            <TextBlock Text="▼"
+                                       Margin="6,0,0,0" />
+                        </StackPanel>
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Quick clean safe modules"
+                                          Command="{Binding QuickCleanCommand}">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text=""
+                                                   FontFamily="Segoe MDL2 Assets" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Cancel running task"
+                                          Command="{Binding CancelCommand}">
+                                    <MenuItem.Icon>
+                                        <TextBlock Text=""
+                                                   FontFamily="Segoe MDL2 Assets" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
                 </StackPanel>
 
-            <DataGrid Grid.Row="2"
-                          ItemsSource="{Binding SelectedModule.Items}"
-                          SelectedItem="{Binding SelectedModule.SelectedItem, Mode=TwoWay}"
-                          AutoGenerateColumns="False"
-                          HeadersVisibility="Column"
-                          CanUserAddRows="False"
-                          CanUserDeleteRows="False"
-                  RowHeight="30"
-                  Margin="0,0,0,16"
-                  Background="{DynamicResource CardBrush}"
-                  BorderBrush="{DynamicResource BorderBrush}"
-                  BorderThickness="1"
-                  RowBackground="{DynamicResource SurfaceAltBrush}"
-                  AlternatingRowBackground="Transparent"
-                  GridLinesVisibility="None">
-                    <DataGrid.Columns>
-                        <DataGridCheckBoxColumn Binding="{Binding IsSelected, Mode=TwoWay}" Width="40" />
-                        <DataGridTextColumn Binding="{Binding DisplayName}" Header="Item" Width="*" />
-                        <DataGridTextColumn Binding="{Binding Kind}" Header="Type" Width="160" />
-                        <DataGridTextColumn Binding="{Binding SizeDisplay}" Header="Size" Width="120" />
-                        <DataGridTextColumn Binding="{Binding Path}" Header="Location" Width="260" />
-                    </DataGrid.Columns>
-                </DataGrid>
-
-        <Border Grid.Row="3"
-            Background="{DynamicResource CardBrush}"
-            BorderBrush="{DynamicResource BorderBrush}"
-            BorderThickness="1"
-            CornerRadius="12"
-            Padding="12"
-            Height="120">
-                    <StackPanel>
-                        <TextBlock Text="Activity Log"
-                                   FontSize="13"
-                                   FontWeight="Bold"
-                                   Foreground="{DynamicResource PrimaryTextBrush}" />
-                        <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                      Margin="0,4,0,0">
-                            <ItemsControl ItemsSource="{Binding LogEntries}">
-                                <ItemsControl.ItemTemplate>
+                <Grid Grid.Row="2"
+                      Margin="0,0,0,16">
+                    <DataGrid ItemsSource="{Binding SelectedModule.Items}"
+                              SelectedItem="{Binding SelectedModule.SelectedItem, Mode=TwoWay}"
+                              AutoGenerateColumns="False"
+                              HeadersVisibility="Column"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              CanUserResizeRows="False"
+                              RowHeaderWidth="0"
+                              RowHeight="36"
+                              AlternationCount="2"
+                              BorderThickness="1"
+                              Background="{DynamicResource CardBrush}"
+                              BorderBrush="{DynamicResource BorderBrush}"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="#11000000">
+                        <DataGrid.Resources>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="Margin" Value="0,0,0,2" />
+                                <Setter Property="SnapsToDevicePixels" Value="True" />
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="Padding" Value="8,0" />
+                                <Setter Property="Background" Value="Transparent" />
+                            </Style>
+                        </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Binding="{Binding IsSelected, Mode=TwoWay}"
+                                                    Width="36"
+                                                    Header="#" />
+                            <DataGridTextColumn Binding="{Binding DisplayName}"
+                                                Header="Item"
+                                                Width="2*" />
+                            <DataGridTextColumn Binding="{Binding Item.ItemType}"
+                                                Header="Type"
+                                                Width="120" />
+                            <DataGridTextColumn Binding="{Binding SizeDisplay}"
+                                                Header="Size"
+                                                Width="120" />
+                            <DataGridTemplateColumn Header="Location"
+                                                    MinWidth="220"
+                                                    Width="2*">
+                                <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Message}"
-                                                   FontSize="11"
-                                                   Margin="0,2,0,0"
-                                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                                        <TextBlock Text="{Binding Path}"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding Path}" />
                                     </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-                    </StackPanel>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <Border Background="#44000000"
+                            BorderBrush="Transparent"
+                            CornerRadius="10"
+                            Padding="16"
+                            IsHitTestVisible="False">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedModule}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding SelectedModule.Items.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="No items yet"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                            <TextBlock Text="Click Scan to discover items for cleanup."
+                                       FontSize="12"
+                                       Foreground="{DynamicResource SecondaryTextBrush}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Grid.Row="3"
+                        Background="{DynamicResource SurfaceAltBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="0">
+                    <Expander IsExpanded="True"
+                              Background="Transparent">
+                        <Expander.Header>
+                            <DockPanel>
+                                <TextBlock Text="Activity Log"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                                <TextBlock Text="{Binding LogEntries.Count, StringFormat={}{0} entries}"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           FontSize="11"
+                                           DockPanel.Dock="Right" />
+                            </DockPanel>
+                        </Expander.Header>
+                        <Border Padding="16">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          MaxHeight="220">
+                                <ItemsControl ItemsSource="{Binding LogEntries}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="10"
+                                                    CornerRadius="8"
+                                                    Margin="0,0,0,8"
+                                                    BorderThickness="1">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Severity}" Value="Success">
+                                                                <Setter Property="Background" Value="#0F1F2B17" />
+                                                                <Setter Property="BorderBrush" Value="#2E6B3A" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Severity}" Value="Warning">
+                                                                <Setter Property="Background" Value="#1AFFB35E" />
+                                                                <Setter Property="BorderBrush" Value="#FFB35E" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Severity}" Value="Error">
+                                                                <Setter Property="Background" Value="#1AF56B6C" />
+                                                                <Setter Property="BorderBrush" Value="#F56B6C" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="90" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Timestamp, StringFormat={}{0:HH:mm:ss}}"
+                                                               FontFamily="Consolas"
+                                                               FontSize="11"
+                                                               Foreground="{DynamicResource SecondaryTextBrush}" />
+                                                    <Border Grid.Column="1"
+                                                            Background="#33000000"
+                                                            CornerRadius="6"
+                                                            Padding="8,2"
+                                                            Margin="8,0">
+                                                        <TextBlock Text="{Binding Severity}"
+                                                                   FontSize="11"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                                                    </Border>
+                                                    <TextBlock Grid.Column="2"
+                                                               Text="{Binding Message}"
+                                                               TextWrapping="Wrap"
+                                                               Foreground="{DynamicResource PrimaryTextBrush}" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+                    </Expander>
                 </Border>
             </Grid>
         </Border>

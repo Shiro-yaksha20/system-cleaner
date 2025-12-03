@@ -14,6 +14,7 @@
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
     <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
     <SolidColorBrush x:Key="AccentSoftBrush" Color="#203E6FE2" />
+    <SolidColorBrush x:Key="AccentGlowBrush" Color="#803E6FE2" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
     <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}" />
     <SolidColorBrush x:Key="CardBrush" Color="{StaticResource CardColor}" />

@@ -10,13 +10,16 @@ public sealed class AppSettings
 
     public string? VirusTotalApiKey { get; set; }
 
+    public bool HasVirusTotalApiKey { get; set; }
+
     public AppSettings Clone()
     {
         return new AppSettings
         {
             Theme = Theme,
             RequireConfirmation = RequireConfirmation,
-            VirusTotalApiKey = VirusTotalApiKey
+            VirusTotalApiKey = VirusTotalApiKey,
+            HasVirusTotalApiKey = HasVirusTotalApiKey
         };
     }
 }

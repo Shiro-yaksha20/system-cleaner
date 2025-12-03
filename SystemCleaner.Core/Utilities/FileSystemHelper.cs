@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using SystemCleaner.Core.Models;
 
@@ -8,6 +9,7 @@ namespace SystemCleaner.Core.Utilities;
 
 internal static class FileSystemHelper
 {
+    private static readonly string[] RestrictedRoots = BuildRestrictedRoots();
     public static long CalculateDirectorySize(string path, CancellationToken cancellationToken, List<string> issues)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -15,7 +17,19 @@ internal static class FileSystemHelper
             return 0;
         }
 
-        var directory = new DirectoryInfo(path);
+        var normalizedPath = NormalizePath(path);
+        if (IsRestrictedPath(normalizedPath))
+        {
+            issues.Add($"Skipping restricted path '{normalizedPath}'.");
+            return 0;
+        }
+
+        if (normalizedPath is null)
+        {
+            return 0;
+        }
+
+        var directory = new DirectoryInfo(normalizedPath);
         if (!directory.Exists)
         {
             return 0;
@@ -79,14 +93,21 @@ internal static class FileSystemHelper
         var issues = new List<string>();
         long freedBytes = 0;
 
-        if (!Directory.Exists(item.Path))
+        var normalizedPath = NormalizePath(item.Path);
+        if (IsRestrictedPath(normalizedPath))
+        {
+            issues.Add($"Skipping '{normalizedPath}' because it is a protected system location.");
+            return new CleanupItemResult(item, succeeded: false, bytesFreed: 0, issues);
+        }
+
+        if (normalizedPath is null || !Directory.Exists(normalizedPath))
         {
             return new CleanupItemResult(item, succeeded: true, bytesFreed: 0, issues);
         }
 
         try
         {
-            freedBytes = CleanDirectoryContents(new DirectoryInfo(item.Path), deleteRootDirectory: false, cancellationToken, issues);
+            freedBytes = CleanDirectoryContents(new DirectoryInfo(normalizedPath), deleteRootDirectory: false, cancellationToken, issues);
         }
         catch (OperationCanceledException)
         {
@@ -104,14 +125,21 @@ internal static class FileSystemHelper
     {
         var issues = new List<string>();
 
-        if (!File.Exists(item.Path))
+        var normalizedPath = NormalizePath(item.Path);
+        if (IsRestrictedPath(normalizedPath))
+        {
+            issues.Add($"Skipping '{normalizedPath}' because it is a protected system file.");
+            return new CleanupItemResult(item, succeeded: false, bytesFreed: 0, issues);
+        }
+
+        if (normalizedPath is null || !File.Exists(normalizedPath))
         {
             return new CleanupItemResult(item, succeeded: true, bytesFreed: 0, issues);
         }
 
         try
         {
-            var fileInfo = new FileInfo(item.Path);
+            var fileInfo = new FileInfo(normalizedPath);
             var freedBytes = DeleteFileSafe(fileInfo, issues);
             return new CleanupItemResult(item, issues.Count == 0, freedBytes, issues);
         }
@@ -157,6 +185,17 @@ internal static class FileSystemHelper
         foreach (var subDirectory in subDirectories)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (IsRestrictedPath(subDirectory.FullName))
+            {
+                issues.Add($"Skipping restricted path '{subDirectory.FullName}'.");
+                continue;
+            }
+
+            if (IsReparsePoint(subDirectory))
+            {
+                issues.Add($"Skipping reparse point '{subDirectory.FullName}' to avoid deleting linked content.");
+                continue;
+            }
             freedBytes += CleanDirectoryContents(subDirectory, deleteRootDirectory: true, cancellationToken, issues);
         }
 
@@ -190,6 +229,18 @@ internal static class FileSystemHelper
 
     private static void TryDeleteDirectory(DirectoryInfo directory, List<string> issues)
     {
+        if (IsRestrictedPath(directory.FullName))
+        {
+            issues.Add($"Skipping restricted directory '{directory.FullName}'.");
+            return;
+        }
+
+        if (IsReparsePoint(directory))
+        {
+            issues.Add($"Skipping reparse point '{directory.FullName}'.");
+            return;
+        }
+
         try
         {
             if ((directory.Attributes & FileAttributes.ReadOnly) != 0)
@@ -203,5 +254,72 @@ internal static class FileSystemHelper
         {
             issues.Add($"Unable to delete directory '{directory.FullName}': {ex.Message}");
         }
+    }
+
+    private static bool IsRestrictedPath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        return RestrictedRoots.Any(root => path.Equals(root, StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string? NormalizePath(string? rawPath)
+    {
+        if (string.IsNullOrWhiteSpace(rawPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            return Path.GetFullPath(Environment.ExpandEnvironmentVariables(rawPath)).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        }
+        catch
+        {
+            return rawPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        }
+    }
+
+    private static string[] BuildRestrictedRoots()
+    {
+        var roots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        void Add(string? candidate)
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                return;
+            }
+
+            var normalized = NormalizePath(candidate);
+            if (!string.IsNullOrWhiteSpace(normalized))
+            {
+                roots.Add(normalized);
+            }
+        }
+
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.Windows));
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.System));
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.SystemX86));
+        Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows) ?? string.Empty, "WinSxS"));
+        Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows) ?? string.Empty, "Installer"));
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles));
+        Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles) ?? string.Empty, "WindowsApps"));
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86));
+        Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) ?? string.Empty, "WindowsApps"));
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData));
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFiles));
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFilesX86));
+
+        return roots.Where(root => !string.IsNullOrWhiteSpace(root)).ToArray();
+    }
+
+    private static bool IsReparsePoint(DirectoryInfo directory)
+    {
+        return (directory.Attributes & FileAttributes.ReparsePoint) != 0;
     }
 }

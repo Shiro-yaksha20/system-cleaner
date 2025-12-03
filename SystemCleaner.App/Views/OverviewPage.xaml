@@ -33,7 +33,7 @@
                                        FontWeight="Bold"
                                        Foreground="{DynamicResource PrimaryTextBrush}" />
                         </StackPanel>
-                        <TextBlock Text="{Binding LastScanSummary}"
+                        <TextBlock Text="{Binding Cleanup.LastScanSummary}"
                                    FontSize="12"
                                    Foreground="{DynamicResource SecondaryTextBrush}"
                                    Margin="0,8,0,0" />
@@ -43,7 +43,7 @@
                                 Margin="0,18,0,0"
                                 HorizontalAlignment="Left"
                                 Style="{DynamicResource AccentButtonStyle}"
-                                Command="{Binding ScanCommand}" />
+                            Command="{Binding Cleanup.ScanCommand}" />
                     </StackPanel>
                 </Border>
 
@@ -68,7 +68,7 @@
                                        FontWeight="Bold"
                                        Foreground="{DynamicResource PrimaryTextBrush}" />
                         </StackPanel>
-                        <TextBlock Text="{Binding LastQuickCleanSummary}"
+                        <TextBlock Text="{Binding Cleanup.LastQuickCleanSummary}"
                                    FontSize="12"
                                    Foreground="{DynamicResource SecondaryTextBrush}"
                                    Margin="0,8,0,0" />
@@ -78,10 +78,142 @@
                                 Margin="0,18,0,0"
                                 HorizontalAlignment="Left"
                                 Style="{DynamicResource AccentButtonStyle}"
-                                Command="{Binding QuickCleanCommand}" />
+                            Command="{Binding Cleanup.QuickCleanCommand}" />
                     </StackPanel>
                 </Border>
             </StackPanel>
+
+            <Grid Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="16"
+                        Padding="20"
+                        Margin="0,0,12,0">
+                    <StackPanel>
+                        <TextBlock Text="Installed Apps"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Text="{Binding Uninstaller.Applications.Count, StringFormat={}{0:N0}}"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   Margin="0,6,0,0" />
+                        <TextBlock Text="Catalog entries"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="16"
+                        Padding="20"
+                        Margin="12,0,12,0">
+                    <StackPanel>
+                        <TextBlock Text="Startup Items"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Text="{Binding StartupManager.Entries.Count, StringFormat={}{0:N0}}"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   Margin="0,6,0,0" />
+                        <TextBlock Text="Boot programs"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="16"
+                        Padding="20"
+                        Margin="12,0,12,0">
+                    <StackPanel>
+                        <TextBlock Text="Browser Extensions"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Text="{Binding Uninstaller.BrowserExtensions.Count, StringFormat={}{0:N0}}"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   Margin="0,6,0,0" />
+                        <TextBlock Text="Tracked extensions"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="3"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="16"
+                        Padding="20"
+                        Margin="12,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Cleanup Items"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Text="{Binding Cleanup.PendingCleanupItemCount, StringFormat={}{0:N0}}"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   Margin="0,6,0,0" />
+                        <TextBlock Text="Pending files"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Border Background="{DynamicResource CardBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="16"
+                    Padding="20"
+                    Margin="0,0,0,24">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="System Uptime"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Text="{Binding SystemInfo.UptimeDisplay}"
+                                   FontSize="24"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   Margin="0,4,0,0" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1"
+                                HorizontalAlignment="Right">
+                        <TextBlock Text="Last Boot"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Text="{Binding SystemInfo.LastBootDisplay}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   Margin="0,4,0,0" />
+                    </StackPanel>
+                </Grid>
+            </Border>
 
         <Border Background="{DynamicResource SurfaceAltBrush}"
             BorderBrush="{DynamicResource BorderBrush}"
@@ -102,6 +234,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
                 <Border Grid.Column="0"
@@ -117,20 +250,23 @@
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource PrimaryTextBrush}" />
                         <Grid Margin="0,16,0,0"
-                              VerticalAlignment="Center">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <Grid Grid.Column="0"
-                                  Width="190"
-                                  DataContext="{Binding SystemUsage.Cpu}">
+                              HorizontalAlignment="Center"
+                              DataContext="{Binding SystemUsage.Cpu}">
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasTelemetry}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <Grid Width="190">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="190" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
-
                                 <Grid Height="190"
                                       Tag="100">
                                     <Ellipse Fill="{DynamicResource SurfaceBrush}"
@@ -192,105 +328,75 @@
                                                    TextAlignment="Center" />
                                     </Grid>
                                 </Grid>
-
-                                <StackPanel Grid.Row="1"
-                                            Orientation="Horizontal"
-                                            HorizontalAlignment="Center"
-                                            Margin="0,16,0,0">
-                                    <Border Padding="12,8"
-                                            CornerRadius="14"
-                                            Background="{DynamicResource GaugeInfoPillBrush}"
-                                            BorderBrush="{DynamicResource GaugeInfoPillBorderBrush}"
-                                            BorderThickness="1"
-                                            Opacity="0.82">
-                                        <StackPanel>
-                                            <TextBlock Text="Temperature"
-                                                       FontSize="10"
-                                                       Foreground="{DynamicResource SecondaryTextBrush}" />
-                                            <TextBlock Text="{Binding TemperatureCelsius, StringFormat={}{0:F1} °C}"
-                                                       FontSize="12"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource PrimaryTextBrush}" />
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Padding="12,8"
-                                            Margin="12,0,0,0"
-                                            CornerRadius="14"
-                                            Background="{DynamicResource GaugeInfoPillBrush}"
-                                            BorderBrush="{DynamicResource GaugeInfoPillBorderBrush}"
-                                            BorderThickness="1"
-                                            Opacity="0.82">
-                                        <StackPanel>
-                                            <TextBlock Text="Clock"
-                                                       FontSize="10"
-                                                       Foreground="{DynamicResource SecondaryTextBrush}" />
-                                            <TextBlock Text="{Binding FrequencyMhz, StringFormat={}{0:F0} MHz}"
-                                                       FontSize="12"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource PrimaryTextBrush}" />
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Grid>
-
-                    <Grid Grid.Column="1"
-                                  Margin="36,0,0,0"
-                                  VerticalAlignment="Center"
-                                  MinWidth="180">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0"
-                                           Text="Memory Frequency"
-                                           Foreground="{DynamicResource SecondaryTextBrush}" />
-                                <TextBlock Grid.Row="0"
-                                           Grid.Column="1"
-                                           Text="{Binding SystemUsage.Cpu.MemoryFrequencyMhz, StringFormat={}{0:F0} MHz}"
-                                           Foreground="{DynamicResource PrimaryTextBrush}"
-                                           FontWeight="SemiBold"
-                                           HorizontalAlignment="Right" />
-                                <TextBlock Grid.Row="1"
-                                           Text="Voltage"
-                                           Margin="0,8,0,0"
-                                           Foreground="{DynamicResource SecondaryTextBrush}" />
-                                <TextBlock Grid.Row="1"
-                                           Grid.Column="1"
-                                           Text="{Binding SystemUsage.Cpu.VoltageMillivolts, StringFormat={}{0:F0} mV}"
-                                           Margin="0,8,0,0"
-                                           Foreground="{DynamicResource PrimaryTextBrush}"
-                                           FontWeight="SemiBold"
-                                           HorizontalAlignment="Right" />
-                                <TextBlock Grid.Row="2"
-                                           Text="Power"
-                                           Margin="0,8,0,0"
-                                           Foreground="{DynamicResource SecondaryTextBrush}" />
-                                <TextBlock Grid.Row="2"
-                                           Grid.Column="1"
-                                           Text="{Binding SystemUsage.Cpu.PowerWatts, StringFormat={}{0:F0} W}"
-                                           Margin="0,8,0,0"
-                                           Foreground="{DynamicResource PrimaryTextBrush}"
-                                           FontWeight="SemiBold"
-                                           HorizontalAlignment="Right" />
-                                <TextBlock Grid.Row="3"
-                                           Text="Core Clock"
-                                           Margin="0,8,0,0"
-                                           Foreground="{DynamicResource SecondaryTextBrush}" />
-                                <TextBlock Grid.Row="3"
-                                           Grid.Column="1"
-                                           Text="{Binding SystemUsage.Cpu.FrequencyMhz, StringFormat={}{0:F0} MHz}"
-                                           Margin="0,8,0,0"
-                                           Foreground="{DynamicResource PrimaryTextBrush}"
-                                           FontWeight="SemiBold"
-                                           HorizontalAlignment="Right" />
                             </Grid>
                         </Grid>
+
+                        <StackPanel Margin="0,18,0,0"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    DataContext="{Binding SystemUsage.Cpu}">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasTelemetry}"
+                                                     Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <StackPanel>
+                                <TextBlock Text="Temperature"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding TemperatureDisplay}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel Margin="24,0,24,0">
+                                <TextBlock Text="Clock"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding FrequencyDisplay}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Power"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding PowerDisplay}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding SystemUsage.Cpu.TelemetryStatus}"
+                                   Margin="0,20,0,0"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource WarningTextBrush}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SystemUsage.Cpu.HasTelemetry}"
+                                                     Value="False">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
 
@@ -300,27 +406,30 @@
                         BorderThickness="1"
                         CornerRadius="16"
                         Padding="20"
-                        Margin="12,0,0,0">
+                        Margin="12,0,12,0">
                     <StackPanel>
                         <TextBlock Text="{Binding SystemUsage.Gpu.Name}"
                                    FontSize="14"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource PrimaryTextBrush}" />
                         <Grid Margin="0,16,0,0"
-                              VerticalAlignment="Center">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <Grid Grid.Column="0"
-                                  Width="190"
-                                  DataContext="{Binding SystemUsage.Gpu}">
+                              HorizontalAlignment="Center"
+                              DataContext="{Binding SystemUsage.Gpu}">
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasTelemetry}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <Grid Width="190">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="190" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
-
                                 <Grid Height="190"
                                       Tag="100">
                                     <Ellipse Fill="{DynamicResource SurfaceBrush}"
@@ -382,105 +491,239 @@
                                                    TextAlignment="Center" />
                                     </Grid>
                                 </Grid>
-
-                                <StackPanel Grid.Row="1"
-                                            Orientation="Horizontal"
-                                            HorizontalAlignment="Center"
-                                            Margin="0,16,0,0">
-                                    <Border Padding="12,8"
-                                            CornerRadius="14"
-                                            Background="{DynamicResource GaugeInfoPillBrush}"
-                                            BorderBrush="{DynamicResource GaugeInfoPillBorderBrush}"
-                                            BorderThickness="1"
-                                            Opacity="0.82">
-                                        <StackPanel>
-                                            <TextBlock Text="Temperature"
-                                                       FontSize="10"
-                                                       Foreground="{DynamicResource SecondaryTextBrush}" />
-                                            <TextBlock Text="{Binding TemperatureCelsius, StringFormat={}{0:F1} °C}"
-                                                       FontSize="12"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource PrimaryTextBrush}" />
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Padding="12,8"
-                                            Margin="12,0,0,0"
-                                            CornerRadius="14"
-                                            Background="{DynamicResource GaugeInfoPillBrush}"
-                                            BorderBrush="{DynamicResource GaugeInfoPillBorderBrush}"
-                                            BorderThickness="1"
-                                            Opacity="0.82">
-                                        <StackPanel>
-                                            <TextBlock Text="Clock"
-                                                       FontSize="10"
-                                                       Foreground="{DynamicResource SecondaryTextBrush}" />
-                                            <TextBlock Text="{Binding FrequencyMhz, StringFormat={}{0:F0} MHz}"
-                                                       FontSize="12"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource PrimaryTextBrush}" />
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Grid>
-
-                    <Grid Grid.Column="1"
-                        Margin="36,0,0,0"
-                        VerticalAlignment="Center"
-                        MinWidth="180">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0"
-                                           Text="Memory Frequency"
-                                           Foreground="{DynamicResource SecondaryTextBrush}" />
-                                <TextBlock Grid.Row="0"
-                                           Grid.Column="1"
-                                           Text="{Binding SystemUsage.Gpu.MemoryFrequencyMhz, StringFormat={}{0:F0} MHz}"
-                                           Foreground="{DynamicResource PrimaryTextBrush}"
-                                           FontWeight="SemiBold"
-                                           HorizontalAlignment="Right" />
-                                <TextBlock Grid.Row="1"
-                                           Text="Voltage"
-                                           Margin="0,8,0,0"
-                                           Foreground="{DynamicResource SecondaryTextBrush}" />
-                                <TextBlock Grid.Row="1"
-                                           Grid.Column="1"
-                                           Text="{Binding SystemUsage.Gpu.VoltageMillivolts, StringFormat={}{0:F0} mV}"
-                                           Margin="0,8,0,0"
-                                           Foreground="{DynamicResource PrimaryTextBrush}"
-                                           FontWeight="SemiBold"
-                                           HorizontalAlignment="Right" />
-                                <TextBlock Grid.Row="2"
-                                           Text="Power"
-                                           Margin="0,8,0,0"
-                                           Foreground="{DynamicResource SecondaryTextBrush}" />
-                                <TextBlock Grid.Row="2"
-                                           Grid.Column="1"
-                                           Text="{Binding SystemUsage.Gpu.PowerWatts, StringFormat={}{0:F0} W}"
-                                           Margin="0,8,0,0"
-                                           Foreground="{DynamicResource PrimaryTextBrush}"
-                                           FontWeight="SemiBold"
-                                           HorizontalAlignment="Right" />
-                                <TextBlock Grid.Row="3"
-                                           Text="Core Clock"
-                                           Margin="0,8,0,0"
-                                           Foreground="{DynamicResource SecondaryTextBrush}" />
-                                <TextBlock Grid.Row="3"
-                                           Grid.Column="1"
-                                           Text="{Binding SystemUsage.Gpu.FrequencyMhz, StringFormat={}{0:F0} MHz}"
-                                           Margin="0,8,0,0"
-                                           Foreground="{DynamicResource PrimaryTextBrush}"
-                                           FontWeight="SemiBold"
-                                           HorizontalAlignment="Right" />
                             </Grid>
                         </Grid>
+
+                        <StackPanel Margin="0,18,0,0"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    DataContext="{Binding SystemUsage.Gpu}">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasTelemetry}"
+                                                     Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <StackPanel>
+                                <TextBlock Text="Temperature"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding TemperatureDisplay}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel Margin="24,0,24,0">
+                                <TextBlock Text="Clock"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding FrequencyDisplay}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Memory Freq"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding MemoryFrequencyDisplay}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding SystemUsage.Gpu.TelemetryStatus}"
+                                   Margin="0,20,0,0"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource WarningTextBrush}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SystemUsage.Gpu.HasTelemetry}"
+                                                     Value="False">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="16"
+                        Padding="20"
+                        Margin="12,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Memory"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <Grid Margin="0,16,0,0"
+                              HorizontalAlignment="Center"
+                              DataContext="{Binding SystemUsage.Memory}">
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasTelemetry}"
+                                                     Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <Grid Width="190">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="190" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid Height="190"
+                                      Tag="100">
+                                    <Ellipse Fill="{DynamicResource SurfaceBrush}"
+                                             Stroke="{DynamicResource BorderBrush}"
+                                             StrokeThickness="1" />
+                                    <Ellipse Width="150"
+                                             Height="150"
+                                             Fill="{DynamicResource GaugeInnerBrush}"
+                                             Stroke="{DynamicResource GaugeInnerStrokeBrush}"
+                                             StrokeThickness="1"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center" />
+                                    <Path Stroke="{DynamicResource SecondaryTextBrush}"
+                                          StrokeThickness="10"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          Opacity="0.22">
+                                        <Path.RenderTransform>
+                                            <TranslateTransform X="20" Y="20" />
+                                        </Path.RenderTransform>
+                                        <Path.Data>
+                                            <Binding Path="Tag"
+                                                     RelativeSource="{RelativeSource AncestorType=Grid}"
+                                                     Converter="{StaticResource UsagePercentToArcConverter}"
+                                                     ConverterParameter="150" />
+                                        </Path.Data>
+                                    </Path>
+                                    <Path Stroke="{DynamicResource AccentBrush}"
+                                          StrokeThickness="10"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round">
+                                        <Path.RenderTransform>
+                                            <TranslateTransform X="20" Y="20" />
+                                        </Path.RenderTransform>
+                                        <Path.Data>
+                                            <Binding Path="UsagePercent"
+                                                     Converter="{StaticResource UsagePercentToArcConverter}"
+                                                     ConverterParameter="150" />
+                                        </Path.Data>
+                                    </Path>
+                                    <Grid HorizontalAlignment="Center"
+                                          VerticalAlignment="Center">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Text="{Binding UsagePercent, StringFormat={}{0:F0}%}"
+                                                   FontSize="36"
+                                                   FontWeight="Bold"
+                                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   TextAlignment="Center" />
+                                        <TextBlock Grid.Row="1"
+                                                   Text="Usage"
+                                                   FontSize="12"
+                                                   Margin="0,6,0,0"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   TextAlignment="Center" />
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+                        </Grid>
+
+                        <StackPanel Margin="0,18,0,0"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    DataContext="{Binding SystemUsage.Memory}">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasTelemetry}"
+                                                     Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <StackPanel>
+                                <TextBlock Text="Used"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding UsedDisplay}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel Margin="24,0,24,0">
+                                <TextBlock Text="Available"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding AvailableDisplay}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Total"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding TotalDisplay}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <TextBlock Text="Memory telemetry unavailable."
+                                   Margin="0,20,0,0"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource SecondaryTextBrush}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SystemUsage.Memory.HasTelemetry}"
+                                                     Value="False">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -587,7 +830,7 @@
                        Foreground="{DynamicResource PrimaryTextBrush}"
                        Margin="0,0,0,12" />
 
-            <ItemsControl ItemsSource="{Binding ModuleSummaries}">
+            <ItemsControl ItemsSource="{Binding Cleanup.ModuleSummaries}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <UniformGrid Columns="4"
@@ -614,7 +857,7 @@
                                                Margin="8,0,0,0"
                                                Foreground="{DynamicResource PrimaryTextBrush}" />
                                 </StackPanel>
-                                <TextBlock Text="{Binding LastScanSummary}"
+                                <TextBlock Text="{Binding Cleanup.LastScanSummary}"
                                            FontSize="12"
                                            Margin="0,10,0,0"
                                            TextWrapping="Wrap"
